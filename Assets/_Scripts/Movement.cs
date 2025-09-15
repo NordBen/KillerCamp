@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+    [SerializeField] private float movementSpeed = 5.0f;
     // Update is called once per frame
     private void Update()
     {
@@ -10,7 +11,7 @@ public class Movement : MonoBehaviour
 
         Vector3 movement = new Vector3(horizontal, vertical, 0.0f);
 
-        Vector3 newPosition = transform.position + movement * Time.deltaTime;
+        Vector3 newPosition = transform.position + movement.normalized * movementSpeed * Time.deltaTime;
 
         this.transform.position = newPosition;
     }
