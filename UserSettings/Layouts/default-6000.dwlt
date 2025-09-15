@@ -23,6 +23,9 @@ MonoBehaviour:
     y: 43.2
     width: 1536
     height: 780.8
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_ShowMode: 4
   m_Title: Project
@@ -56,6 +59,9 @@ MonoBehaviour:
 =======
     width: 1536
     height: 780.8
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -102,9 +108,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     y: 753
     width: 1470
 =======
+=======
+>>>>>>> Stashed changes
     y: 760.8
     width: 1536
 >>>>>>> Stashed changes
@@ -136,6 +145,9 @@ MonoBehaviour:
 =======
     width: 1536
     height: 724.8
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
@@ -167,6 +179,9 @@ MonoBehaviour:
 =======
     width: 1172.8
     height: 724.8
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
@@ -198,6 +213,9 @@ MonoBehaviour:
 =======
     width: 1172.8
     height: 458.4
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
@@ -227,6 +245,9 @@ MonoBehaviour:
 =======
     width: 289.6
     height: 458.4
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 201, y: 226}
   m_MaxSize: {x: 4001, y: 4026}
@@ -258,6 +279,9 @@ MonoBehaviour:
 =======
     width: 883.2001
     height: 458.4
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
@@ -284,9 +308,15 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     y: 454
     width: 1122.5
     height: 263
+=======
+    y: 458.4
+    width: 1172.8
+    height: 266.4
+>>>>>>> Stashed changes
 =======
     y: 458.4
     width: 1172.8
@@ -323,6 +353,9 @@ MonoBehaviour:
 =======
     width: 363.19995
     height: 724.8
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
@@ -430,6 +463,9 @@ MonoBehaviour:
 =======
   m_defaultScale: 0.47060186
   m_LastWindowPixelSize: {x: 881.2001, y: 427.6}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
@@ -461,8 +497,13 @@ MonoBehaviour:
     x: 0
     y: 24
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     width: 276
     height: 428
+=======
+    width: 288.6
+    height: 432.4
+>>>>>>> Stashed changes
 =======
     width: 288.6
     height: 432.4
@@ -530,15 +571,21 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     x: 278
     y: 24
     width: 843.5
     height: 428
 =======
+=======
+>>>>>>> Stashed changes
     x: 290.6
     y: 24
     width: 881.2001
     height: 432.4
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_SerializedDataModeController:
     m_DataMode: 0
@@ -1331,9 +1378,15 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     y: 478
     width: 1121.5
     height: 237
+=======
+    y: 482.4
+    width: 1171.8
+    height: 240.4
+>>>>>>> Stashed changes
 =======
     y: 482.4
     width: 1171.8
@@ -1379,9 +1432,15 @@ MonoBehaviour:
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     m_SelectedIDs: 5edb0000
     m_LastClickedID: 56158
     m_ExpandedIDs: 
+=======
+    m_SelectedIDs: e2470000
+    m_LastClickedID: 18402
+    m_ExpandedIDs: 0000000092470000
+>>>>>>> Stashed changes
 =======
     m_SelectedIDs: e2470000
     m_LastClickedID: 18402
@@ -1531,15 +1590,21 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     x: 1123.5
     y: 24
     width: 346.5
     height: 691
 =======
+=======
+>>>>>>> Stashed changes
     x: 1173.8
     y: 24
     width: 362.19995
     height: 698.8
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_SerializedDataModeController:
     m_DataMode: 0
