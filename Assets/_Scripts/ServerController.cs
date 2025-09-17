@@ -7,12 +7,12 @@ public class ServerController : MonoBehaviour
 {
     [SerializeField]
     TMP_InputField code;
-    //[SerializeField]
-    //RelayManager relayManager;
+    
+    [SerializeField] RelayManager relayManager;
 
     public async void StartHost()
     {
-        //await relayManager.CreateRelay(true);
+        await relayManager.CreateRelay(true);
         SceneManager.LoadSceneAsync("Camp");
         SceneManager.sceneLoaded += SceneManager_sceneLoaded_Host;
     }
@@ -25,13 +25,13 @@ public class ServerController : MonoBehaviour
 
     public async void StartClient()
     {
-        //await relayManager.JoinRelay(code.text);
+        await relayManager.JoinRelay(code.text);
         NetworkManager.Singleton.StartClient();
     }
 
     public async void StartServer()
     {
-        //await relayManager.CreateRelay(false);
+        await relayManager.CreateRelay(false);
         SceneManager.LoadScene("Camp");
         SceneManager.sceneLoaded += SceneManager_sceneLoaded_Server;
     }
