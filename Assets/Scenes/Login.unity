@@ -411,7 +411,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4103570995778371866, guid: 2233de69a3ca51a4e8e36b3954ac0840, type: 3}
       propertyPath: ConnectionData.ServerListenAddress
-      value: 127.0.0.1
+      value: 0.0.0.0
       objectReference: {fileID: 0}
     - target: {fileID: 5882097041233187346, guid: 2233de69a3ca51a4e8e36b3954ac0840, type: 3}
       propertyPath: m_LocalPosition.x
