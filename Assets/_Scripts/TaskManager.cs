@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class TaskManager : MonoBehaviour
+public class TaskManager : NetworkBehaviour
 {
 
     public bool HasTask;
