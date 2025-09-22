@@ -50,11 +50,11 @@ public class Movement : NetworkBehaviour
 
     private void FixedUpdate()
     {        
-        if(IsServer && !IsClient)
+        if(IsServer)
         {
             rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
         }
-        else
+        else if(IsClient && IsOwner)
         {
             float distance = (rb.position + movement * movementSpeed * Time.fixedDeltaTime).magnitude;
             RaycastHit2D[] hits = new RaycastHit2D[10];
