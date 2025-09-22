@@ -107,8 +107,8 @@ GameObject:
   - component: {fileID: 141371887103324735}
   - component: {fileID: 2934501416057569748}
   - component: {fileID: 6286866275461491814}
-  - component: {fileID: -418191105350058397}
-  - component: {fileID: -8100759170770523461}
+  - component: {fileID: -662405931278918084}
+  - component: {fileID: -2452069011076893056}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -314,7 +314,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!114 &-418191105350058397
+--- !u!114 &-662405931278918084
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -323,11 +323,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6169890965277416667}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5abfce83aadd948498d4990c645a017b, type: 3}
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 1
+  NetworkTransformExpanded: 0
   AutoOwnerAuthorityTickOffset: 1
   PositionInterpolationType: 0
   RotationInterpolationType: 0
@@ -338,7 +338,7 @@ MonoBehaviour:
   RotationMaxInterpolationTime: 0.1
   ScaleLerpSmoothing: 1
   ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 1
+  AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
   SyncPositionX: 1
@@ -358,10 +358,9 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 0
+  Interpolate: 1
   SlerpPosition: 0
-  StaleDataHandling: 1
---- !u!114 &-8100759170770523461
+--- !u!114 &-2452069011076893056
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
