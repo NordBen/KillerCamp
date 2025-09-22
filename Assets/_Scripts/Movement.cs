@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 
 public class Movement : NetworkBehaviour
 {
@@ -9,21 +10,47 @@ public class Movement : NetworkBehaviour
 
     private Vector2 movement;
 
+    private float updateTimer = 0;
+
+    private float updateFrequency = 1/60f;
+
+    private AnticipatedNetworkTransform anticipatedTrans;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        anticipatedTrans = GetComponent<AnticipatedNetworkTransform>();
     }
 
 
     // Update is called once per frame
     private void Update()
     {
-        movement.x = Input.GetAxisRaw("Horizontal");
-        movement.y = Input.GetAxisRaw("Vertical");
+        if(IsClient)
+        {
+            movement.x = Input.GetAxisRaw("Horizontal");
+            movement.y = Input.GetAxisRaw("Vertical");
+
+            updateTimer += Time.deltaTime;
+
+            if (updateTimer >= updateFrequency) 
+            {
+                updateTimer -= updateFrequency;
+
+                UpdateInputRpc(movement);
+            }
+        }
+    }
+
+    [Rpc(SendTo.Server)]
+    private void UpdateInputRpc(Vector2 movement)
+    {
+        this.movement = movement;
     }
 
     private void FixedUpdate()
     {
         rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
+        anticipatedTrans.AnticipateMove(rb.position);
     }
 }
