@@ -50,7 +50,26 @@ public class Movement : NetworkBehaviour
 
     private void FixedUpdate()
     {        
-        rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
+        if(IsServer && !IsClient)
+        {
+            rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
+        }
+        else
+        {
+            float distance = (rb.position + movement * movementSpeed * Time.fixedDeltaTime).magnitude;
+            RaycastHit2D[] hits = null;
+            rb.Cast(movement, hits, distance);
+
+
+            foreach (RaycastHit2D hit in hits)
+            {
+                if(hit.distance < distance)
+                {
+                    distance = hit.distance;
+                }
+            }
+            anticipatedTrans.AnticipateMove(rb.position + movement * distance);
+        }
         
 
         //rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
