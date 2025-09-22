@@ -57,7 +57,7 @@ public class Movement : NetworkBehaviour
         else
         {
             float distance = (rb.position + movement * movementSpeed * Time.fixedDeltaTime).magnitude;
-            RaycastHit2D[] hits = null;
+            RaycastHit2D[] hits = new RaycastHit2D[10];
             rb.Cast(movement, hits, distance);
 
 
