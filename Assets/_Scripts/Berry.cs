@@ -1,7 +1,8 @@
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
-public class Berry : MonoBehaviour, IInteract
+public class Berry : NetworkBehaviour, IInteract
 {
 
     [SerializeField] private GameObject currentPlayer;
