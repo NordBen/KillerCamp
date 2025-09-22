@@ -1,8 +1,11 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 public class Berry : MonoBehaviour, IInteract
 {
+
+    [SerializeField] private GameObject currentPlayer;
+    [SerializeField] private float cooldown;
     public void Interact()
     {
         Debug.Log("Is interacting");
@@ -20,23 +23,26 @@ public class Berry : MonoBehaviour, IInteract
     }
     private IEnumerator Countdown()
     {
-        Debug.Log("3");
-        yield return new WaitForSeconds(1);
-        Debug.Log("2");
-        yield return new WaitForSeconds(1);
-            Debug.Log("1");
-        yield return new WaitForSeconds(1);
+        Debug.Log("Task Started");
+        yield return new WaitForSeconds(cooldown);
+
         Debug.Log("You're all done!");
+
+        currentPlayer.GetComponent<TaskManager>().HasTask = false;
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        CanInteract();
-        Debug.Log("Press E to interact!");
-
-        if (Input.GetKeyDown(KeyCode.E))
+        if (collision.CompareTag("Player"))
         {
-            StartCoroutine(Countdown());
+            currentPlayer = collision.gameObject;
+            CanInteract();
+            Debug.Log("Press E to interact!");
+
+            if (currentPlayer.GetComponent<TaskManager>().HasTask == true && Input.GetKeyDown(KeyCode.E))
+            {
+                StartCoroutine(Countdown());
+            }
         }
     }
 }
