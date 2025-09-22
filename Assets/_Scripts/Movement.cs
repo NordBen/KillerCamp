@@ -50,7 +50,7 @@ public class Movement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        anticipatedTrans.AnticipateMove(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
+        anticipatedTrans.AnticipateMove((Vector2)(anticipatedTrans.AnticipatedState.Position) + movement * movementSpeed * Time.fixedDeltaTime);
         //rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
     }
 }
