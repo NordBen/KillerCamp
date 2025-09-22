@@ -29,7 +29,7 @@ public class Berry : NetworkBehaviour, IInteract
 
         Debug.Log("You're all done!");
 
-        currentPlayer.GetComponent<TaskManager>().HasTask = false;
+        currentPlayer.GetComponent<TaskManager>().CompleteTaskRpc();
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -40,7 +40,7 @@ public class Berry : NetworkBehaviour, IInteract
             CanInteract();
             Debug.Log("Press E to interact!");
 
-            if (currentPlayer.GetComponent<TaskManager>().HasTask == true && Input.GetKeyDown(KeyCode.E))
+            if (currentPlayer.GetComponent<TaskManager>().HasTask.Value == true && Input.GetKeyDown(KeyCode.E))
             {
                 StartCoroutine(Countdown());
             }

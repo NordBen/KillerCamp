@@ -13,8 +13,8 @@ public class ServerController : MonoBehaviour
     public async void StartHost()
     {
         await relayManager.CreateRelay(true);
-        SceneManager.LoadSceneAsync("Camp");
         SceneManager.sceneLoaded += SceneManager_sceneLoaded_Host;
+        SceneManager.LoadSceneAsync("Camp");
     }
 
     private void SceneManager_sceneLoaded_Host(Scene arg0, LoadSceneMode arg1)
