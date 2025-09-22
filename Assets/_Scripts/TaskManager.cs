@@ -5,7 +5,6 @@ public class TaskManager : NetworkBehaviour
 {
 
     public NetworkVariable<bool> HasTask;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
 
     public override void OnNetworkSpawn()
     {

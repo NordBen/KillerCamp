@@ -56,16 +56,18 @@ public class Movement : NetworkBehaviour
         }
         if(IsClient && IsOwner)
         {
-            float distance = (rb.position + movement * movementSpeed * Time.fixedDeltaTime).magnitude;
+            float distance = (movement * movementSpeed * Time.fixedDeltaTime).magnitude;
+            Debug.Log(distance);
             RaycastHit2D[] hits = new RaycastHit2D[10];
-            rb.Cast(movement, hits, distance);
+            int hitCount = rb.Cast(movement, hits, distance);
+            RaycastHit2D hit;
 
-
-            foreach (RaycastHit2D hit in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                hit = hits[i];
                 if(hit.distance < distance && hit.collider != GetComponent<Collider2D>())
                 {
-                    distance = hit.distance;
+                    distance = hit.distance - 0.01f;
                 }
             }
             anticipatedTrans.AnticipateMove(rb.position + movement * distance);

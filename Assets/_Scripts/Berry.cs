@@ -6,7 +6,7 @@ public class Berry : NetworkBehaviour, IInteract
 {
 
     [SerializeField] private GameObject currentPlayer;
-    [SerializeField] private float cooldown;
+    [SerializeField] private float cooldown = 3f;
     public void Interact()
     {
         Debug.Log("Is interacting");

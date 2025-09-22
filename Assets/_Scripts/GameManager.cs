@@ -34,7 +34,8 @@ public class GameManager : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if(IsClient)
+        if (!NetworkManager.Singleton.IsConnectedClient) return;
+        if(IsClient && playersReady.Count > (int)NetworkManager.Singleton.LocalClientId)
         {
             if(playersReady[(int)NetworkManager.Singleton.LocalClientId])
             {
