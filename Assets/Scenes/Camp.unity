@@ -5924,7 +5924,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  playerName: 
+  playerName: Halldor
 --- !u!4 &1806032300
 Transform:
   m_ObjectHideFlags: 0

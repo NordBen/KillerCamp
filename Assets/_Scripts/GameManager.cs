@@ -47,5 +47,6 @@ public class GameManager : NetworkBehaviour
         {
             players.Add(kv.Value);
         }
+        players.SetDirty(true);
     }
 }
