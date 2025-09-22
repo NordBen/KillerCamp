@@ -54,7 +54,7 @@ public class Movement : NetworkBehaviour
         {
             rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
         }
-        else if(IsClient && IsOwner)
+        if(IsClient && IsOwner)
         {
             float distance = (rb.position + movement * movementSpeed * Time.fixedDeltaTime).magnitude;
             RaycastHit2D[] hits = new RaycastHit2D[10];
@@ -63,7 +63,7 @@ public class Movement : NetworkBehaviour
 
             foreach (RaycastHit2D hit in hits)
             {
-                if(hit.distance < distance)
+                if(hit.distance < distance && hit.collider != GetComponent<Collider2D>())
                 {
                     distance = hit.distance;
                 }
