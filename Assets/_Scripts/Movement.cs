@@ -26,7 +26,7 @@ public class Movement : NetworkBehaviour
     // Update is called once per frame
     private void Update()
     {
-        if(IsClient)
+        if(IsClient && IsOwner)
         {
             movement.x = Input.GetAxisRaw("Horizontal");
             movement.y = Input.GetAxisRaw("Vertical");
