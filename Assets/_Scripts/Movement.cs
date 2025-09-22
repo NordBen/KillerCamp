@@ -49,16 +49,15 @@ public class Movement : NetworkBehaviour
     }
 
     private void FixedUpdate()
-    {
-        Vector3 newPosition;
-        
-        var oldPosition = rb.position;
+    {        
         rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
-        newPosition = rb.position;
-        rb.MovePosition(oldPosition);
         
 
-        anticipatedTrans.AnticipateMove(newPosition);
         //rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
+    }
+
+    private void LateUpdate()
+    {
+        anticipatedTrans.AnticipateMove(rb.position);
     }
 }
