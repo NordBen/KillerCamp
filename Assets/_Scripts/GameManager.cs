@@ -19,7 +19,7 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
             base.OnNetworkSpawn();
         }
-        if (IsOwner && IsClient) 
+        if (IsClient) 
         {
             SetPlayerNameRpc(playerName);
         }
