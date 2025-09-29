@@ -16,7 +16,9 @@ public class PlayerState : NetworkBehaviour
             playerData = new PlayerData(playerName, GetRole());
             AddPlayerToGameServerRpc();
         }
-        
+        Color randomColor = UnityEngine.Random.ColorHSV();
+        Debug.Log("Player spawned");
+
         base.OnNetworkSpawn();
     }
 
