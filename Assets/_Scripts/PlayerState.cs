@@ -11,12 +11,18 @@ public class PlayerState : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (IsServer)
+        {
+            private void ServerSetPlayerColorRpc
+            {
+                this.GetComponent<spriterenderer>().color = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+            }
+        }
         if (IsClient)
         {
             playerData = new PlayerData(playerName, GetRole());
             AddPlayerToGameServerRpc();
         }
-        Color randomColor = UnityEngine.Random.ColorHSV();
         Debug.Log("Player spawned");
 
         base.OnNetworkSpawn();
