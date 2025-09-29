@@ -27,6 +27,7 @@ public class PlayerState : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerSetPlayerColorRpc()
     {
+        Color newColor = UnityEngine.Random.ColorHSV();
         Debug.Log(newColor);
         ClientSetPlayerColorRpc(newColor);
     }
