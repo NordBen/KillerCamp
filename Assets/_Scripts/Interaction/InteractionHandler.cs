@@ -1,4 +1,4 @@
-using UnityEditor;
+using KillerCamp.TaskSystem;
 using UnityEngine;
 
 namespace KillerCamp
@@ -6,17 +6,26 @@ namespace KillerCamp
     public class InteractionHandler : MonoBehaviour
     {
         [SerializeField] private LayerMask InteractionLayer;
-        public bool DebugRay;
 
         [SerializeField] private GameObject hitObj;
 
-        void Start()
-        {
+        private IInteract interactable;
+        private bool interacting;
+        
+        public bool Interacting { get => interacting; set => interacting = value; }
+        
+        public IInteract Interactable { get => interactable; set => interactable = value; }
 
+        void Update()
+        {
+            if (interacting && HasInteractable() && Input.GetKeyDown(KeyCode.E))
+            {
+                interactable.Interact();
+            }
         }
-
+        
         private void OnTriggerEnter2D(Collider2D collision)
-        {
+        {/*
             Debug.Log($"Entered Trigger of {collision}");
             hitObj = collision.gameObject;
 
@@ -24,27 +33,9 @@ namespace KillerCamp
             {
                 Debug.Log($"Interacted with {interactable}");
                 interactable.Interact();
-            }
+            }*/
         }
 
-        void Update()
-        {/*
-        if (Physics.Raycast(new Ray(transform.position, transform.forward), out RaycastHit HitResult, 400f))
-        {
-            if (HitResult.transform is IInteract HitInteractable)
-            {
-                Debug.Log(HitResult.transform);
-                HitInteractable.Interact();
-            }
-        }*/
-        }
-        /*
-        private void OnDrawGizmos()
-        {
-            if (DebugRay)
-            {
-                Debug.DrawLine(transform.position, transform.forward, Color.green, 400f);
-            }
-        }*/
+        private bool HasInteractable() => interactable != null;
     }
 }

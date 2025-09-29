@@ -2,7 +2,6 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine.UI;
 
 public class GameManager : NetworkBehaviour
@@ -15,6 +14,13 @@ public class GameManager : NetworkBehaviour
     public NetworkList<bool> playersReady = new NetworkList<bool>();
 
     public Image buttonBackground;
+    
+    public static GameManager instance;
+
+    private void Awake()
+    {
+        if (instance == null) instance = this;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -24,11 +30,11 @@ public class GameManager : NetworkBehaviour
             playersDict = new Dictionary<ulong, FixedString32Bytes>();
             NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
             base.OnNetworkSpawn();
-        }
+        }/*
         if (IsClient) 
         {
             SetPlayerNameRpc(playerName);
-        }
+        }*/
         
     }
 
@@ -47,11 +53,17 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-
+/*
     [Rpc(SendTo.Server)]
     private void SetPlayerNameRpc(FixedString32Bytes playerName, RpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
+        playersDict[clientId] = playerName;
+        UpdateList();
+    }*/
+
+    public void UpdatePlayer(ulong clientId, FixedString32Bytes playerName)
+    {
         playersDict[clientId] = playerName;
         UpdateList();
     }

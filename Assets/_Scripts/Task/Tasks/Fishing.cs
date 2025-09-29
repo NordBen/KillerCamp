@@ -29,7 +29,7 @@ public class Fishing : MonoBehaviour, IInteract
 
         Debug.Log("You're all done!");
 
-        currentPlayer.GetComponent<TaskManager>().CompleteTaskRpc();
+        //currentPlayer.GetComponent<TaskManager>().CompleteTaskRpc();
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -39,11 +39,11 @@ public class Fishing : MonoBehaviour, IInteract
             currentPlayer = collision.gameObject;
             CanInteract();
             Debug.Log("Press E to interact!");
-
+            /*
             if (currentPlayer.GetComponent<TaskManager>().HasTask.Value == true && Input.GetKeyDown(KeyCode.E))
             {
                 StartCoroutine(Countdown());
-            }
+            }*/
         }
     }
 }

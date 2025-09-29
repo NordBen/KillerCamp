@@ -105,6 +105,7 @@ GameObject:
   - component: {fileID: 858088590368504743}
   - component: {fileID: 5582699477382256500}
   - component: {fileID: 141371887103324735}
+  - component: {fileID: 4751408474667855279}
   - component: {fileID: 2934501416057569748}
   - component: {fileID: 6286866275461491814}
   - component: {fileID: 2060522188434719746}
@@ -242,6 +243,20 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   cameraHolder: {fileID: 6488891772708162691}
   offset: {x: 0, y: 0, z: -12}
+--- !u!114 &4751408474667855279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6169890965277416667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ef9917e1c4e3ba49ada6a08c66763c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerName: 
 --- !u!61 &2934501416057569748
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -330,6 +345,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   HasTask:
     m_InternalValue: 0
+  taskList: []
+  startWithTask: 0
+  continousTasks: 0
 --- !u!114 &-1322087213040654645
 MonoBehaviour:
   m_ObjectHideFlags: 0

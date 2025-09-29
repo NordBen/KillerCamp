@@ -1,29 +1,57 @@
 using System;
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace KillerCamp.TaskSystem
 {
     public interface ITask
     {
-        void Execute(object owningObject);
+        abstract void Execute(object owningObject);
     }
 
     public enum TaskState { Started, OnGoing, Finished }
 
     [Serializable]
-    public class TimedTask : ITask
+    public class BaseTask : ITask, INetworkSerializable
     {
-        [SerializeField] private float duration;
-
-        public event Action<ITask> OnCompleted;
-
-        private TaskState _state;
-        private float _elapsedTime;
-
-        public TaskState CurrentState => _state;
-
+        public event Action<ITask> OnComplete;
+        
+        protected TaskState state;
+        public TaskState CurrentState => state;
+        
         public void Execute(object owningObject)
+        {
+            OnStarted();
+            OnExecute(owningObject);
+            OnCompleted();
+        }
+
+        protected virtual void OnExecute(object owningObject) { }
+        
+        public virtual void OnStarted() => state = TaskState.Started;
+
+        public virtual void OnCompleted()
+        {
+            state = TaskState.Finished;
+            OnComplete?.Invoke(this);
+            TaskManager.instance.ServerCompleteTaskRpc(this);
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            
+        }
+    }
+
+    [Serializable]
+    public class TimedTask : BaseTask
+    {
+        [SerializeField] private float taskDuration;
+        
+        private int _elapsedTime;
+
+        protected override void OnExecute(object owningObject)
         {
             if (owningObject is MonoBehaviour monoOwner)
             {
@@ -31,30 +59,15 @@ namespace KillerCamp.TaskSystem
             }
         }
 
-        private void Started()
-        {
-            _state = TaskState.Started;
-        }
-
-        private void Complete()
-        {
-            _state = TaskState.Finished;
-            OnCompleted?.Invoke(this);
-        }
-
         private IEnumerator DurationTask()
         {
-            Started();
-            while (_elapsedTime < duration)
+            state = TaskState.OnGoing;
+            while (_elapsedTime < taskDuration)
             {
-                yield return null;
-                _elapsedTime += Time.deltaTime;
-                _state = TaskState.OnGoing;
-
+                yield return new WaitForSecondsRealtime(1f);
+                _elapsedTime++;
                 Debug.Log($"Time elasped {_elapsedTime}");
             }
-            Complete();
-            yield break;
         }
     }
 }
