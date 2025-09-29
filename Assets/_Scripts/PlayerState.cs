@@ -14,7 +14,7 @@ public class PlayerState : NetworkBehaviour
     {
         if (IsServer)
         {
-            playerColor.Value = UnityEngine.Random.ColorHSV();
+            playerColor.Value = UnityEngine.Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
         }
         if (IsClient)
         {
@@ -41,7 +41,7 @@ public class PlayerState : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerSetPlayerColorRpc()
     {
-        Color newColor = UnityEngine.Random.ColorHSV();
+        Color newColor = UnityEngine.Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
         Debug.Log(newColor);
         ClientSetPlayerColorRpc(newColor);
     }
