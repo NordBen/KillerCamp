@@ -27,13 +27,14 @@ public class PlayerState : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerSetPlayerColorRpc()
     {
-        ClientSetPlayerColorRpc(UnityEngine.Random.ColorHSV());
+        Debug.Log(newColor);
+        ClientSetPlayerColorRpc(newColor);
     }
 
     [Rpc(SendTo.ClientsAndHost)]
     private void ClientSetPlayerColorRpc(Color newColor)
     {
-        GetComponent<SpriteRenderer>().color = new Color();
+        GetComponent<SpriteRenderer>().color = newColor;
     }
 
     private CamperRole GetRole()
