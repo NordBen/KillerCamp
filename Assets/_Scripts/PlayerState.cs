@@ -13,10 +13,7 @@ public class PlayerState : NetworkBehaviour
     {
         if (IsServer)
         {
-            private void ServerSetPlayerColorRpc
-            {
-                this.GetComponent<spriterenderer>().color = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
-            }
+            ServerSetPlayerColorRpc();
         }
         if (IsClient)
         {
@@ -26,6 +23,11 @@ public class PlayerState : NetworkBehaviour
         Debug.Log("Player spawned");
 
         base.OnNetworkSpawn();
+    }
+    [Rpc(SendTo.Server)]
+    private void ServerSetPlayerColorRpc()
+    {
+        GetComponent<SpriteRenderer>().color = UnityEngine.Random.ColorHSV();
     }
 
     private CamperRole GetRole()
