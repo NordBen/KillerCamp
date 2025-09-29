@@ -8,12 +8,13 @@ public class PlayerState : NetworkBehaviour
     
     public PlayerData PlayerData => playerData;
     private PlayerData playerData;
+    private NetworkVariable<Color> playerColor = new ();
 
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
-            ServerSetPlayerColorRpc();
+            playerColor.Value = UnityEngine.Random.ColorHSV();
         }
         if (IsClient)
         {
@@ -22,9 +23,21 @@ public class PlayerState : NetworkBehaviour
         }
         Debug.Log("Player spawned");
 
+        playerColor.OnValueChanged += (oldColor, newColor) =>
+        {
+            ApplyColor(newColor);
+        };
+
+        ApplyColor(playerColor.Value);
+
         base.OnNetworkSpawn();
     }
-    
+
+    void ApplyColor(Color newColor)
+    {
+        GetComponent<SpriteRenderer>().color = color;
+    }
+
     [Rpc(SendTo.Server)]
     private void ServerSetPlayerColorRpc()
     {
@@ -38,6 +51,7 @@ public class PlayerState : NetworkBehaviour
     {
         GetComponent<SpriteRenderer>().color = newColor;
     }
+
 
     private CamperRole GetRole()
     {
