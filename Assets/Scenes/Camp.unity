@@ -3046,11 +3046,42 @@ PrefabInstance:
       propertyPath: m_Name
       value: Berry Picking
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1480465124919549624, guid: 5608c1dcf22454241871aeaf34df8363, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6096855951578516913, guid: 5608c1dcf22454241871aeaf34df8363, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1018915478}
   m_SourcePrefab: {fileID: 100100000, guid: 5608c1dcf22454241871aeaf34df8363, type: 3}
+--- !u!1 &1018915477 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6096855951578516913, guid: 5608c1dcf22454241871aeaf34df8363, type: 3}
+  m_PrefabInstance: {fileID: 1018915476}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1018915478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018915477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eb497ffdc10d7e4e87db6ad0af8a4c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  task:
+    rid: 7445567954882396221
+  references:
+    version: 2
+    RefIds:
+    - rid: 7445567954882396221
+      type: {class: TimedTask, ns: KillerCamp.TaskSystem, asm: Assembly-CSharp}
+      data:
+        taskDuration: 5
 --- !u!1 &1030655248
 GameObject:
   m_ObjectHideFlags: 0

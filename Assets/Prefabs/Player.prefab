@@ -111,6 +111,7 @@ GameObject:
   - component: {fileID: 2060522188434719746}
   - component: {fileID: -1322087213040654645}
   - component: {fileID: 57701580872590058}
+  - component: {fileID: 7773167931244640925}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -346,6 +347,7 @@ MonoBehaviour:
   HasTask:
     m_InternalValue: 0
   taskList: []
+  tasks: []
   startWithTask: 0
   continousTasks: 0
 --- !u!114 &-1322087213040654645
@@ -412,6 +414,22 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &7773167931244640925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6169890965277416667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdf548091ef3c144fa4e64b7f573bb2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InteractionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hitObj: {fileID: 0}
 --- !u!1 &6488891772708162691
 GameObject:
   m_ObjectHideFlags: 0
