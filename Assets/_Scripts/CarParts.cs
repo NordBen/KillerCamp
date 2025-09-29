@@ -12,7 +12,10 @@ public class CarParts : MonoBehaviour, IInteract
 
     public void Interact()
     {
-        
+        if(inRange && currentPlayer != null)
+        {
+            PickUp();
+        }
     }
 
     public bool IsInteracting()
@@ -42,5 +45,6 @@ public class CarParts : MonoBehaviour, IInteract
     {
         //currentPlayer.make thing happen
         GetComponent<Renderer>().enabled = false;
+        GetComponent<Collider>().enabled = false;
     }
 }
