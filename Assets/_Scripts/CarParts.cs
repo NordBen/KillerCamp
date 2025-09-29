@@ -1,3 +1,4 @@
+using KillerCamp;
 using UnityEngine;
 
 public class CarParts : MonoBehaviour, IInteract
@@ -29,6 +30,7 @@ public class CarParts : MonoBehaviour, IInteract
         {
             inRange = true;
             currentPlayer = other.gameObject;
+            other.GetComponent<InteractionHandler>().SetInteract(this);
         }
     }
 
@@ -44,7 +46,9 @@ public class CarParts : MonoBehaviour, IInteract
     private void PickUp()
     {
         //currentPlayer.make thing happen
-        GetComponent<Renderer>().enabled = false;
+        inRange = false;
+        currentPlayer = null;
         GetComponent<Collider>().enabled = false;
+        GetComponent<Renderer>().enabled = false;
     }
 }

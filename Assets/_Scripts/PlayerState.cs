@@ -10,6 +10,10 @@ public class PlayerState : NetworkBehaviour
     private PlayerData playerData;
     private NetworkVariable<Color> playerColor = new ();
 
+    private GameObject carPartOne;
+    private GameObject carPartTwo;
+    private GameObject carPartThree;
+
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -63,6 +67,11 @@ public class PlayerState : NetworkBehaviour
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
         GameManager.instance.UpdatePlayer(clientId, playerData.Name);
+    }
+
+    public void AddCarPart(GameObject carPart)
+    {
+
     }
 }
 
