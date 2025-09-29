@@ -35,7 +35,7 @@ public class PlayerState : NetworkBehaviour
 
     void ApplyColor(Color newColor)
     {
-        GetComponent<SpriteRenderer>().color = color;
+        GetComponent<SpriteRenderer>().color = newColor;
     }
 
     [Rpc(SendTo.Server)]
