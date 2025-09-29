@@ -16,6 +16,12 @@ namespace KillerCamp
         
         public IInteract Interactable { get => interactable; set => interactable = value; }
 
+        public void SetInteract(IInteract inInteractable)
+        {
+            Interacting = true;
+            interactable = inInteractable;
+        }
+
         void Update()
         {
             if (interacting && HasInteractable() && Input.GetKeyDown(KeyCode.E))

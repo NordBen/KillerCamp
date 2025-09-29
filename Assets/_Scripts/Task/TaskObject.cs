@@ -35,8 +35,7 @@ namespace KillerCamp.TaskSystem
             {
                 Debug.Log("Player entered trigger");
                 inInteraction = true;
-                other.GetComponent<InteractionHandler>().Interacting = true;
-                other.GetComponent<InteractionHandler>().Interactable = this;
+                other.GetComponent<InteractionHandler>().SetInteract(this);
             }
         }
 
