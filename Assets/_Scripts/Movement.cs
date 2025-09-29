@@ -65,7 +65,7 @@ public class Movement : NetworkBehaviour
             for (int i = 0; i < hitCount; i++)
             {
                 hit = hits[i];
-                if(hit.distance < distance && hit.collider != GetComponent<Collider2D>())
+                if(hit.distance < distance && hit.collider != GetComponent<Collider2D>() && !hit.collider.isTrigger)
                 {
                     distance = hit.distance - 0.01f;
                 }
