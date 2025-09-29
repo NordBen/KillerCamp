@@ -24,6 +24,7 @@ public class PlayerState : NetworkBehaviour
 
         base.OnNetworkSpawn();
     }
+    
     [Rpc(SendTo.Server)]
     private void ServerSetPlayerColorRpc()
     {
