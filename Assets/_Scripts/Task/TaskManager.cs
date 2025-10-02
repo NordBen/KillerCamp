@@ -159,7 +159,8 @@ namespace KillerCamp.TaskSystem
                 var task = GetTaskObjById(taskId);
                 if (task.Task != null)
                 {
-                    GameObject player = NetworkManager.Singleton.SpawnManager.SpawnedObjects[rpcParams.Receive.SenderClientId].gameObject;
+                    GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
+                    Debug.Log("[Client Upd Task]: " + NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject);
                     player.GetComponent<TaskComponent>().SetTask(task.Task);
                 }
             }
