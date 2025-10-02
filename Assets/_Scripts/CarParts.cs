@@ -5,6 +5,7 @@ public class CarParts : MonoBehaviour, IInteract
 {
     private bool inRange;
     private GameObject currentPlayer;
+    public CarScript car;
 
     public bool CanInteract()
     {
@@ -26,7 +27,11 @@ public class CarParts : MonoBehaviour, IInteract
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if(other.CompareTag("Player"))
+        if(currentPlayer != null)
+        {
+            return;
+        }
+        else if(other.CompareTag("Player"))
         {
             inRange = true;
             currentPlayer = other.gameObject;
@@ -36,7 +41,7 @@ public class CarParts : MonoBehaviour, IInteract
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && other.gameObject == currentPlayer)
         {
             inRange = false;
             currentPlayer = null;
@@ -45,10 +50,7 @@ public class CarParts : MonoBehaviour, IInteract
 
     private void PickUp()
     {
-        //currentPlayer.make thing happen
-        inRange = false;
-        currentPlayer = null;
-        GetComponent<Collider>().enabled = false;
-        GetComponent<Renderer>().enabled = false;
+        car.partsCounter++;
+        this.gameObject.SetActive(false);
     }
 }
