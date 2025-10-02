@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
@@ -10,6 +11,10 @@ public class GameManager : NetworkBehaviour
 
     public NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
     public Dictionary<ulong, FixedString32Bytes> playersDict;
+
+    [SerializeField] private Transform gameTransform;
+
+    public Action OnGameStarted;
 
     public NetworkList<bool> playersReady = new NetworkList<bool>();
 
@@ -36,6 +41,31 @@ public class GameManager : NetworkBehaviour
             SetPlayerNameRpc(playerName);
         }*/
         
+    }
+
+    private void TryStartGame()
+    {
+        bool canStartGame = false;
+        Debug.Log($"Trying to StartGame");
+        foreach (var playerReady in playersReady)
+        {
+            if (!playerReady) return;
+        }
+        canStartGame = true;
+        Debug.Log($"Managed to StartGame");
+
+        ServerStartGameRpc();
+    }
+
+    [Rpc(SendTo.Server)]
+    private void ServerStartGameRpc(RpcParams rpcParams = default)
+    {
+        OnGameStarted?.Invoke();
+        foreach (var playerId in players)
+        {
+            GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
+            player.transform.position = gameTransform.position;
+        }
     }
 
     private void FixedUpdate()
@@ -94,6 +124,7 @@ public class GameManager : NetworkBehaviour
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
         playersReady[(int)clientId] = !playersReady[(int)clientId];
+        TryStartGame();
     }
 
     public void SetPlayerReady()

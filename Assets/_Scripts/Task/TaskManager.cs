@@ -7,10 +7,6 @@ namespace KillerCamp.TaskSystem
 {
     public class TaskManager : NetworkBehaviour
     {
-        public NetworkVariable<bool> HasTask;
-
-        //private NetworkVariable<AbstractTask> networkedTask;
-        
         [SerializeField] public List<TaskObjListEntry> tasks = new();
         
         [SerializeField] public List<TaskObjEntry> tasksObj = new();
@@ -59,6 +55,16 @@ namespace KillerCamp.TaskSystem
             InitializeTasks();
         }
 
+        private void OnEnable()
+        {
+            GameManager.instance.OnGameStarted += OnGameStarted_Implementation;
+        }
+
+        private void OnDisable()
+        {
+            GameManager.instance.OnGameStarted -= OnGameStarted_Implementation;
+        }
+
         void InitializeTasks()
         {
             foreach (var taskObj in FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID))
@@ -69,6 +75,15 @@ namespace KillerCamp.TaskSystem
             for (int i = 0; i < tasks.Count; i++)
             {
                 tasksObj.Add(new TaskObjEntry(999, i));
+            }
+        }
+
+        private void OnGameStarted_Implementation()
+        {
+            foreach (var player in NetworkManager.Singleton.ConnectedClients)
+            {
+                var playerId = NetworkManager.Singleton.ConnectedClients[player.Key].PlayerObject.NetworkObjectId;
+                ServerGiveNewTaskObjRpc(playerId);
             }
         }
 
@@ -99,11 +114,6 @@ namespace KillerCamp.TaskSystem
 
         public override void OnNetworkSpawn()
         {
-            if (HasAuthority && startWithTask)
-            {
-                HasTask.Value = true;
-            }
-
             if (IsClient)
             {
                 ulong clientId = NetworkManager.Singleton.LocalClientId;
