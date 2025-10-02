@@ -7,12 +7,14 @@ public class GameStartManager : NetworkBehaviour
 
     private void Update()
     {
+        // Only the server should assign roles
         if (!IsServer || rolesAssigned) return;
 
+        // Make sure players are registered
         if (RoleManager.Instance != null && RoleManager.Instance.PlayerCount > 0)
         {
             RoleManager.Instance.AssignRoles();
-            rolesAssigned = true;
+            rolesAssigned = true; // prevent assigning roles multiple times
         }
     }
 }

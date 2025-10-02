@@ -27,19 +27,17 @@ public class RoleManager : NetworkBehaviour
     {
         if (!IsServer || players.Count == 0) return;
 
-        // Shuffle list randomly
-        var shuffled = new List<PlayerRoleHandler>(players);
-        shuffled.Sort((a, b) => Random.Range(-1, 2));
+        // Pick exactly one random index to be the Killer
+        int killerIndex = Random.Range(0, players.Count);
 
-        // First player is Killer
-        shuffled[0].SetRole(PlayerRole.Killer);
-
-        // Rest are Campers
-        for (int i = 1; i < shuffled.Count; i++)
+        for (int i = 0; i < players.Count; i++)
         {
-            shuffled[i].SetRole(PlayerRole.Camper);
+            if (i == killerIndex)
+                players[i].SetRole(PlayerRole.Killer);
+            else
+                players[i].SetRole(PlayerRole.Camper);
         }
 
-        Debug.Log("Roles assigned: 1 Killer, rest Campers.");
+        Debug.Log($"Player {killerIndex} is the Killer, rest are Campers.");
     }
 }
