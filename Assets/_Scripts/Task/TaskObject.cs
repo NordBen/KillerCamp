@@ -13,6 +13,8 @@ namespace KillerCamp.TaskSystem
 
         private bool inInteraction = false;
 
+        private GameObject interactedObj;
+
         public bool CanInteract()
         {
             return task.CurrentState != TaskState.Finished;
@@ -20,7 +22,8 @@ namespace KillerCamp.TaskSystem
 
         public void Interact()
         {
-            task.Execute(this);
+            TaskManager.instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
+            //task.Execute(this);
         }
 
         public bool IsInteracting()
@@ -36,6 +39,7 @@ namespace KillerCamp.TaskSystem
                 Debug.Log("Player entered trigger");
                 inInteraction = true;
                 other.GetComponent<InteractionHandler>().SetInteract(this);
+                interactedObj = other.gameObject;
             }
         }
 

@@ -8,6 +8,9 @@ namespace KillerCamp.TaskSystem
     public interface ITask
     {
         abstract void Execute(object owningObject);
+        TaskState CurrentState { get; }
+        bool HasStarted { get; }
+        bool HasFinished { get; }
     }
 
     public enum TaskState { Started, OnGoing, Finished }
@@ -19,7 +22,11 @@ namespace KillerCamp.TaskSystem
         
         protected TaskState state;
         public TaskState CurrentState => state;
-        
+        public bool HasStarted { get; private set; }
+
+        public bool HasFinished { get; private set; }
+
+
         public void Execute(object owningObject)
         {
             OnStarted();
@@ -29,13 +36,18 @@ namespace KillerCamp.TaskSystem
 
         protected virtual void OnExecute(object owningObject) { }
         
-        public virtual void OnStarted() => state = TaskState.Started;
+        public virtual void OnStarted()
+        {
+            HasStarted = true;
+            state = TaskState.Started;
+        }
 
         public virtual void OnCompleted()
         {
+            HasFinished = true;
             state = TaskState.Finished;
             OnComplete?.Invoke(this);
-            TaskManager.instance.ServerCompleteTaskRpc(this);
+            TaskManager.instance.ServerCompleteTaskRpc();
         }
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
