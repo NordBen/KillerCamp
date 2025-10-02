@@ -351,6 +351,7 @@ GameObject:
   - component: {fileID: -4984787510149209538}
   - component: {fileID: -5320117140028875352}
   - component: {fileID: 1411579776571484084}
+  - component: {fileID: 9111557971922878155}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -590,7 +591,6 @@ MonoBehaviour:
     m_InternalValue: 0
   tasks: []
   tasksObj: []
-  currentTask: {fileID: 0}
   startWithTask: 0
   continousTasks: 0
 --- !u!114 &7773167931244640925
@@ -686,6 +686,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   roleText: {fileID: 8658348501465518261}
+--- !u!114 &9111557971922878155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6169890965277416667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e39d57d39a65540b6266a20a235c7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  currentTask: {fileID: 0}
 --- !u!1 &6488891772708162691
 GameObject:
   m_ObjectHideFlags: 0

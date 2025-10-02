@@ -14,8 +14,6 @@ namespace KillerCamp.TaskSystem
         [SerializeField] public List<TaskObjListEntry> tasks = new();
         
         [SerializeField] public List<TaskObjEntry> tasksObj = new();
-
-        [SerializeField] private TaskObject currentTask;
         
         [Serializable]
         public struct TaskObjListEntry
@@ -161,7 +159,8 @@ namespace KillerCamp.TaskSystem
                 var task = GetTaskObjById(taskId);
                 if (task.Task != null)
                 {
-                    currentTask = task.Task;
+                    GameObject player = NetworkManager.Singleton.SpawnManager.SpawnedObjects[rpcParams.Receive.SenderClientId].gameObject;
+                    player.GetComponent<TaskComponent>().SetTask(task.Task);
                 }
             }
         }
