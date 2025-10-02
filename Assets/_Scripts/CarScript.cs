@@ -1,3 +1,4 @@
+using KillerCamp;
 using UnityEngine;
 
 public class CarScript : MonoBehaviour, IInteract
@@ -15,6 +16,7 @@ public class CarScript : MonoBehaviour, IInteract
         if (inRange)
         {
             CheckParts();
+            Debug.Log("Checking parts");
         }
     }
 
@@ -23,9 +25,11 @@ public class CarScript : MonoBehaviour, IInteract
         return inRange;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log("Help");
         inRange = true;
+        other.GetComponent<InteractionHandler>().SetInteract(this);
     }
 
     private void OnTriggerExit2D(Collider2D collision)
