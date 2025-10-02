@@ -118,7 +118,7 @@ namespace KillerCamp.TaskSystem
             {
                 ulong clientId = NetworkManager.Singleton.LocalClientId;
                 Debug.Log("[OnNetworkSpawn TaskManager] ClientId: " + clientId);
-                ServerGiveNewTaskObjRpc(clientId);
+                //ServerGiveNewTaskObjRpc(clientId);
             }
             
             base.OnNetworkSpawn();
