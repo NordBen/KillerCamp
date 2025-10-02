@@ -2,43 +2,46 @@ using Unity.Netcode;
 using UnityEngine;
 using TMPro;
 
+// public enum PlayerRole
+// {
+//     Camper,
+//     Killer
+// }
+
 public class PlayerRoleHandler : NetworkBehaviour
 {
     private NetworkVariable<PlayerRole> role = new NetworkVariable<PlayerRole>(
-        PlayerRole.Camper, // default
+        PlayerRole.Camper,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
     public PlayerRole Role => role.Value;
 
-    [SerializeField] private TextMeshProUGUI roleText; // Assign in Inspector
+    [SerializeField] private TextMeshProUGUI roleText; // assign in inspector
 
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
+        if (IsServer && RoleManager.Instance != null)
         {
-            role.Value = PlayerRole.Camper; // default
-            FindObjectOfType<RoleManager>().RegisterPlayer(this);
+            RoleManager.Instance.RegisterPlayer(this);
         }
 
         role.OnValueChanged += OnRoleChanged;
 
-        // Update UI immediately if role already set
+        // Update UI immediately
         OnRoleChanged(role.Value, role.Value);
     }
 
     private void OnRoleChanged(PlayerRole previous, PlayerRole current)
     {
-        Debug.Log($"{OwnerClientId} role is now {current}");
-
-        // Change UI text
-        if (IsOwner && roleText != null) // only show on local player's screen
+        // Only show role for the local player
+        if (IsOwner && roleText != null)
         {
             roleText.text = $"Role: {current}";
             roleText.color = (current == PlayerRole.Killer) ? Color.red : Color.green;
         }
 
-        // Example: also change body color
+        // Optional: change player color
         var rend = GetComponent<Renderer>();
         if (rend != null)
         {

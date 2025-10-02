@@ -4,23 +4,28 @@ using UnityEngine;
 
 public class RoleManager : NetworkBehaviour
 {
+    public static RoleManager Instance { get; private set; }
+
     private List<PlayerRoleHandler> players = new List<PlayerRoleHandler>();
+
+    public int PlayerCount => players.Count;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     public void RegisterPlayer(PlayerRoleHandler player)
     {
-        if (IsServer) // only the server should keep track of players
+        if (IsServer && !players.Contains(player))
         {
-            if (!players.Contains(player))
-            {
-                players.Add(player);
-            }
+            players.Add(player);
         }
     }
 
     public void AssignRoles()
     {
-        if (!IsServer) return; // safety check
-        if (players.Count == 0) return;
+        if (!IsServer || players.Count == 0) return;
 
         // Shuffle list randomly
         var shuffled = new List<PlayerRoleHandler>(players);
