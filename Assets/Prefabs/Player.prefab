@@ -588,8 +588,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   HasTask:
     m_InternalValue: 0
-  taskList: []
   tasks: []
+  tasksObj: []
+  currentTask: {fileID: 0}
   startWithTask: 0
   continousTasks: 0
 --- !u!114 &7773167931244640925
@@ -884,7 +885,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9084f797e1e0ff948978bef2e7c04ff7, type: 2}
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -906,7 +907,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_Sprite: {fileID: 2347819708480163070, guid: 9f0986e1e635f2e4eac594aa6378f449, type: 3}
-  m_Color: {r: 0.6415094, g: 0.6415094, b: 0.6415094, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
