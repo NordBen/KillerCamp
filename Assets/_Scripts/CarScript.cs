@@ -1,16 +1,26 @@
 using UnityEngine;
 
-public class CarScript : MonoBehaviour
+public class CarScript : MonoBehaviour, IInteract
 {
     public int partsCounter = 0;
     private bool inRange = false;
 
-    private void Update()
+    public bool CanInteract()
     {
-        if (inRange && Input.GetKeyDown(KeyCode.E))
+        return inRange;
+    }
+
+    public void Interact()
+    {
+        if (inRange)
         {
             CheckParts();
         }
+    }
+
+    public bool IsInteracting()
+    {
+        return inRange;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
