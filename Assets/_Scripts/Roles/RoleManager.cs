@@ -6,16 +6,16 @@ public class RoleManager : NetworkBehaviour
 {
     public static RoleManager Instance { get; private set; }
 
-    private List<PlayerRoleHandler> players = new List<PlayerRoleHandler>();
+    private List<RoleComponent> players = new();
 
     public int PlayerCount => players.Count;
 
     private void Awake()
     {
-        Instance = this;
+        if (Instance == null) Instance = this;
     }
 
-    public void RegisterPlayer(PlayerRoleHandler player)
+    public void RegisterPlayer(RoleComponent player)
     {
         if (IsServer && !players.Contains(player))
         {
@@ -33,9 +33,13 @@ public class RoleManager : NetworkBehaviour
         for (int i = 0; i < players.Count; i++)
         {
             if (i == killerIndex)
+            {
                 players[i].SetRole(PlayerRole.Killer);
+            }
             else
+            {
                 players[i].SetRole(PlayerRole.Camper);
+            }
         }
 
         Debug.Log($"Player {killerIndex} is the Killer, rest are Campers.");

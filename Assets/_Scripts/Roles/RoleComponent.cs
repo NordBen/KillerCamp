@@ -2,22 +2,13 @@ using Unity.Netcode;
 using UnityEngine;
 using TMPro;
 
-// public enum PlayerRole
-// {
-//     Camper,
-//     Killer
-// }
-
-public class PlayerRoleHandler : NetworkBehaviour
+public class RoleComponent : NetworkBehaviour
 {
-    private NetworkVariable<PlayerRole> role = new NetworkVariable<PlayerRole>(
-        PlayerRole.Camper,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
-
+    private NetworkVariable<PlayerRole> role = new(PlayerRole.Camper);
+    
     public PlayerRole Role => role.Value;
 
-    [SerializeField] private TextMeshProUGUI roleText; // assign in inspector
+    [SerializeField] private TextMeshProUGUI roleText;
 
     public override void OnNetworkSpawn()
     {
@@ -27,14 +18,12 @@ public class PlayerRoleHandler : NetworkBehaviour
         }
 
         role.OnValueChanged += OnRoleChanged;
-
-        // Update UI immediately
+        
         OnRoleChanged(role.Value, role.Value);
     }
 
     private void OnRoleChanged(PlayerRole previous, PlayerRole current)
     {
-        // Only show role for the local player
         if (IsOwner && roleText != null)
         {
             roleText.text = $"Role: {current}";

@@ -30,7 +30,7 @@ namespace KillerCamp.TaskSystem
 
         public void Interact()
         {
-            var playerRole = interactedObj.GetComponent<PlayerRoleHandler>().Role;
+            var playerRole = interactedObj.GetComponent<RoleComponent>().Role;
             Debug.Log("Interacting player has role: " + playerRole);
             if (playerRole == PlayerRole.Camper)
             {

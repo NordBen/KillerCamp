@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
@@ -9,28 +8,7 @@ namespace KillerCamp.TaskSystem
     {
         [SerializeField] public List<TaskObject> tasks = new();
 
-        [SerializeField] public List<TaskObjEntry> tasksObj = new();
-
         private Dictionary<ulong, int> playerTaskMap = new();
-        
-        [Serializable]
-        public struct TaskObjEntry : INetworkSerializable
-        {
-            public ulong Player;
-            public int TaskId;
-
-            public TaskObjEntry(ulong inPlayer, int inTaskId)
-            {
-                Player = inPlayer;
-                TaskId = inTaskId;
-            }
-
-            public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-            {
-                serializer.SerializeValue(ref Player);
-                serializer.SerializeValue(ref TaskId);
-            }
-        }
 
         [SerializeField] private bool startWithTask;
         [SerializeField] private bool continousTasks;
@@ -40,8 +18,7 @@ namespace KillerCamp.TaskSystem
         private void Awake()
         {
             if (instance == null) instance = this;
-
-            InitializeTasks();
+            if (startWithTask) InitializeTasks();
         }
 
         private void Start()
@@ -59,11 +36,6 @@ namespace KillerCamp.TaskSystem
             foreach (var taskObj in FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID))
             {
                 tasks.Add(taskObj);
-            }
-
-            for (int i = 0; i < tasks.Count; i++)
-            {
-                tasksObj.Add(new TaskObjEntry(999, i));
             }
         }
         
@@ -85,6 +57,8 @@ namespace KillerCamp.TaskSystem
         
         public void GivePlayersTask()
         {
+            if (!IsServer) return;
+            
             int taskIndex = 0;
             foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
             {
@@ -99,53 +73,17 @@ namespace KillerCamp.TaskSystem
                 ClientUpdateTaskClientRpc(taskIndex, clientRpcParams);
                 taskIndex++;
             }
-
-            foreach (var kvp in playerTaskMap)
-            {
-                Debug.Log($"[{kvp.Key}] has gotten task #{kvp.Value}");
-            }
         }
 
         private int GetUnassignedTaskId(ulong clientId)
         {
-            foreach (var taskObj in tasksObj)
+            foreach (var kvp in playerTaskMap)
             {
-                if (taskObj.Player == 999)
-                    return taskObj.TaskId;
+                if (kvp.Key == 999) return kvp.Value;
             }
             return -1;
         }
-/*
-        private TaskObjListEntry GetTaskObjById(int taskId)
-        {
-            if (taskId == -1)
-            {
-                Debug.Log("No task id found");
-                return new TaskObjListEntry();
-            }
-
-            var task = tasks[taskId];
-            if (task.Task != null)
-            {
-                return task;
-            }
-
-            return new TaskObjListEntry();
-        }*/
-
-        [Rpc(SendTo.Server)]
-        public void TryInteractWithTaskRpc(ulong player)
-        {
-            var task = tasks.Find(t => t.TaskType.CurrentState == TaskState.Unassigned);
-            if (task.TaskType != null)
-            {
-                task.TaskType.Execute(task);
-            }
-        }
-
-        private bool AnyTasksLeft() => tasks.Exists(task =>
-            !task.TaskType.HasStarted || !task.TaskType.HasFinished);
-
+        
         [Rpc(SendTo.Server)]
         public void ServerGiveNewTaskObjRpc(ulong player)
         {
@@ -154,7 +92,7 @@ namespace KillerCamp.TaskSystem
             playerTaskMap[player] = taskId;
             ClientUpdateTaskClientRpc(taskId);
         }
-
+        
         [ClientRpc]
         public void ClientUpdateTaskClientRpc(int taskId, ClientRpcParams rpcParams = default)
         {
@@ -170,8 +108,19 @@ namespace KillerCamp.TaskSystem
         }
 
         [Rpc(SendTo.Server)]
+        public void TryInteractWithTaskRpc(ulong player)
+        {
+            var task = tasks.Find(t => t.TaskType.CurrentState == TaskState.Unassigned);
+            if (task.TaskType != null)
+            {
+                task.TaskType.Execute(task);
+            }
+        }
+
+        [Rpc(SendTo.Server)]
         public void ServerCompleteTaskRpc()
         {
+            
         }
     }
 }

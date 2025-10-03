@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
@@ -8,33 +9,22 @@ using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
-    public string playerName;
-
-    public NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
-    public Dictionary<ulong, FixedString32Bytes> playersDict;
-
-    [SerializeField] private NetworkList<Vector3> _playerTransform = new NetworkList<Vector3>();
-
-    public NetworkObject BorderN, BorderE, BorderS;
+    private NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
+    private Dictionary<ulong, FixedString32Bytes> playersDict;
     
     private List<Transform> startingTransforms = new();
     
-    public bool deactivateWalls = true;
-    
-    public bool additionalClientRpcTransform = false;
-
-    //public float MinX;
-    //public float MaxX;
-    //public float MinY;
-    //public float MaxY;
-    //public float MinZ;
-    //public float MaxZ;
-
     public Action OnGameStarted;
 
-    public NetworkList<bool> playersReady = new NetworkList<bool>();
+    private NetworkList<bool> playersReady = new NetworkList<bool>();
+    
+    [SerializeField] private float dayDuration = 90f;
 
-    public Image buttonBackground;
+    [SerializeField] private Image buttonBackground;
+    
+    private bool canStartGame = false;
+    
+    private bool rolesAssigned = false;
     
     public static GameManager instance;
 
@@ -46,6 +36,22 @@ public class GameManager : NetworkBehaviour
         for (int i = 0; i < startTransformObj.transform.childCount; i++)
         {
             startingTransforms.Add(startTransformObj.transform.GetChild(i).gameObject.transform);
+        }
+    }
+    
+    private void FixedUpdate()
+    {
+        if (!NetworkManager.Singleton.IsConnectedClient) return;
+        if(IsClient && playersReady.Count > (int)NetworkManager.Singleton.LocalClientId)
+        {
+            if(playersReady[(int)NetworkManager.Singleton.LocalClientId])
+            {
+                buttonBackground.color = Color.green;
+            }
+            else
+            {
+                buttonBackground.color = Color.white;
+            }
         }
     }
 
@@ -62,19 +68,26 @@ public class GameManager : NetworkBehaviour
         {
             SetPlayerNameRpc(playerName);
         }*/
-        
+    }
+    
+    private void Singleton_OnClientConnectedCallback(ulong obj)
+    {
+        if(IsServer)
+        {
+            Debug.Log($"Client Connected {obj} ");
+            playersDict.TryAdd(obj, new FixedString32Bytes());
+            UpdateList();
+            playersReady.Add(false);
+        }
     }
 
     private void TryStartGame()
     {
-        bool canStartGame = false;
-        Debug.Log($"Trying to StartGame");
         foreach (var playerReady in playersReady)
         {
             if (!playerReady) return;
         }
         canStartGame = true;
-        Debug.Log($"Managed to StartGame");
 
         ServerStartGameRpc();
     }
@@ -83,40 +96,20 @@ public class GameManager : NetworkBehaviour
     private void ServerStartGameRpc(RpcParams rpcParams = default)
     {
         OnGameStarted?.Invoke();
-
-        if (!deactivateWalls)
-        {
-            ServerTryTeleportPlayersRpc();
-        }
-        else
-        {
-            DeactivateBordersClientRpc();
-        }
         
-        /*
-        foreach (var playerId in players)
+        if (RoleManager.Instance != null && RoleManager.Instance.PlayerCount > 0)
         {
-            GameObject player = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
-            Debug.Log("[ServerStartGame] has been called!" + player);
-            
-            //Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
-            //player.transform.position = randomPosition;
-        }*/
-    }
+            RoleManager.Instance.AssignRoles();
+            rolesAssigned = true;
+        }
 
-    [ClientRpc]
-    private void DeactivateBordersClientRpc()
-    {
-        BorderN.gameObject.SetActive(false);
-        Debug.Log(BorderN + " Has been turned off");
-        BorderE.gameObject.SetActive(false);
-        Debug.Log(BorderE + " Has been turned off");
-        BorderS.gameObject.SetActive(false);
-        Debug.Log(BorderS + " Has been turned off");
+        StartCoroutine(DayNightCycle());
+        
+        ServerTeleportPlayersRpc();
     }
 
     [Rpc(SendTo.Server)]
-    private void ServerTryTeleportPlayersRpc()
+    private void ServerTeleportPlayersRpc()
     {
         foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
         {
@@ -130,31 +123,15 @@ public class GameManager : NetworkBehaviour
                 Send = new ClientRpcSendParams { TargetClientIds = new [] { clientId } }
             };
             
-            if (additionalClientRpcTransform) TryTeleportPlayersClientRpc(startPos, clientRpcParams);
+            TeleportPlayersClientRpc(startPos, clientRpcParams);
         }
     }
     
     [ClientRpc]
-    private void TryTeleportPlayersClientRpc(Vector3 startPos, ClientRpcParams rpcParams = default)
+    private void TeleportPlayersClientRpc(Vector3 startPos, ClientRpcParams rpcParams = default)
     {
         var player = NetworkManager.Singleton.LocalClient.PlayerObject;
         player.transform.position = startPos;
-    }
-
-    private void FixedUpdate()
-    {
-        if (!NetworkManager.Singleton.IsConnectedClient) return;
-        if(IsClient && playersReady.Count > (int)NetworkManager.Singleton.LocalClientId)
-        {
-            if(playersReady[(int)NetworkManager.Singleton.LocalClientId])
-            {
-                buttonBackground.color = Color.green;
-            }
-            else
-            {
-                buttonBackground.color = Color.white;
-            }
-        }
     }
 /*
     [Rpc(SendTo.Server)]
@@ -169,17 +146,6 @@ public class GameManager : NetworkBehaviour
     {
         playersDict[clientId] = playerName;
         UpdateList();
-    }
-
-    private void Singleton_OnClientConnectedCallback(ulong obj)
-    {
-        if(IsServer)
-        {
-            Debug.Log($"Client Connected {obj} ");
-            playersDict.TryAdd(obj, new FixedString32Bytes());
-            UpdateList();
-            playersReady.Add(false);
-        }
     }
 
     private void UpdateList()
@@ -206,5 +172,16 @@ public class GameManager : NetworkBehaviour
         {
             SetPlayerReadyRpc();
         }
+    }
+
+    private IEnumerator DayNightCycle()
+    {
+        return new WaitForSecondsRealtime(dayDuration);
+        ServerStartVoting();
+    }
+
+    private void ServerStartVoting()
+    {
+        VoteManager.Singleton.StartVote();
     }
 }
