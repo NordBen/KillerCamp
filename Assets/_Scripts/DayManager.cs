@@ -20,7 +20,7 @@ public class DayManager : MonoBehaviour
         int currentPlayer = 0;
         for (int i = 0; i < NetworkManager.Singleton.ConnectedClients.Count; i++)
         {
-            //players.Add(NetworkManager.Singleton.ConnectedClients.)
+            
         }
         StartCoroutine(NightCycle());
     }
@@ -28,6 +28,7 @@ public class DayManager : MonoBehaviour
     IEnumerator NightCycle()
     {
         yield return new WaitForSeconds(timer);
+        StartVoting();
     }
 
     private void StartVoting()
