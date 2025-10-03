@@ -8,10 +8,18 @@ public class ServerController : MonoBehaviour
     [SerializeField]
     TMP_InputField code;
     
+    [SerializeField]
+    private TMP_InputField playerName;
+    
     [SerializeField] RelayManager relayManager;
+    
+    private string _playerName;
+    
+    public string PlayerName => _playerName;
 
     public async void StartHost()
     {
+        //_playerName = playerName.text;
         await relayManager.CreateRelay(true);
         SceneManager.sceneLoaded += SceneManager_sceneLoaded_Host;
         SceneManager.LoadSceneAsync("Camp");
@@ -25,12 +33,14 @@ public class ServerController : MonoBehaviour
 
     public async void StartClient()
     {
+        //_playerName = playerName.text;
         await relayManager.JoinRelay(code.text);
         NetworkManager.Singleton.StartClient();
     }
 
     public async void StartServer()
     {
+        //_playerName = playerName.text;
         await relayManager.CreateRelay(false);
         SceneManager.LoadScene("Camp");
         SceneManager.sceneLoaded += SceneManager_sceneLoaded_Server;

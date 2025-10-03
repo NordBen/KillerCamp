@@ -4,15 +4,20 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
     private NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
-    [SerializeField] private Dictionary<ulong, FixedString32Bytes> playersDict;
+    [SerializeField] private SerializedDictionary<ulong, FixedString32Bytes> playersDict;
     
     public Dictionary<ulong, FixedString32Bytes> Players => playersDict;
+    
+    [SerializeField] private TMP_Text dayText;
     
     private List<Transform> startingTransforms = new();
     
@@ -62,7 +67,7 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             Debug.Log($"On Network Spawn");
-            playersDict = new Dictionary<ulong, FixedString32Bytes>();
+            playersDict = new SerializedDictionary<ulong, FixedString32Bytes>();
             NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
             base.OnNetworkSpawn();
         }/*
@@ -109,8 +114,8 @@ public class GameManager : NetworkBehaviour
         }
         
         ServerTeleportPlayersRpc();
-        
-        StartCoroutine(DayNightCycle());
+
+        ServerStartDayNightCycleRpc();
         buttonBackground.gameObject.SetActive(false);
         
         OnGameStarted?.Invoke();
@@ -182,6 +187,12 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    public void RestartDayNightCycle()
+    {
+        if (!IsServer) return;
+        ServerStartDayNightCycleRpc();
+    }
+
     private IEnumerator DayNightCycle()
     {
         var elapsedTime = 0;
@@ -189,13 +200,58 @@ public class GameManager : NetworkBehaviour
         {
             yield return new WaitForSecondsRealtime(1);
             elapsedTime++;
+            dayText.text = $"Time until vote {dayDuration - elapsedTime}s";
         }
         
         ServerStartVoting();
     }
 
+    [Rpc(SendTo.Server)]
+    private void ServerStartDayNightCycleRpc()
+    {
+        StartCoroutine(DayNightCycle());
+    }
+
     private void ServerStartVoting()
     {
         VoteManager.Singleton.StartVote();
+    }
+
+    public void Kill(FixedString32Bytes playerName)
+    {
+        if (!IsServer) return;
+
+        ulong clientToKill = 0;
+        bool found = false;
+
+        foreach (var kvp in playersDict)
+        {
+            if (kvp.Value == playerName)
+            {
+                clientToKill = kvp.Key;
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) return;
+        
+        VoteManager.Singleton.DisablePlayerButton(playerName);
+
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientToKill, out var client))
+        { 
+            var playerObj = client.PlayerObject;
+
+            if (playerObj != null)
+            {
+                playerObj.GetComponent<NetworkObject>().Despawn();
+                Destroy(playerObj.gameObject);
+            }
+                
+            NetworkManager.Singleton.DisconnectClient(clientToKill);
+        }
+        
+        playersDict.Remove(clientToKill);
+        UpdateList();
     }
 }

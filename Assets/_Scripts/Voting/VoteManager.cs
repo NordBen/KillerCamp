@@ -5,6 +5,7 @@ using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class VoteManager : NetworkBehaviour
@@ -21,26 +22,17 @@ public class VoteManager : NetworkBehaviour
     [SerializeField] 
     private GameObject voteePrefab;
     
-    [SerializeField] private Dictionary<FixedString32Bytes, int> playerVotes = new();
-    [SerializeField] private Dictionary<FixedString32Bytes, int> playerToButtonMap = new();
+    [SerializeField] private SerializedDictionary<FixedString32Bytes, int> playerVotes = new();
+    [SerializeField] private SerializedDictionary<FixedString32Bytes, int> playerToButtonMap = new();
     private List<GameObject> votableButtons = new();
     private HashSet<ulong> votedClients = new();
+    private List<FixedString32Bytes> eliminatedPlayers = new();
     
     public static VoteManager Singleton;
 
     private void Awake()
     {
         if (Singleton == null) Singleton = this;
-    }
-
-    void Start()
-    {
-        // create as many buttons as there are players to the vote screen on client side
-        int currentPlayer = 0;
-        for (int i = 0; i < NetworkManager.Singleton.ConnectedClients.Count; i++)
-        {
-            
-        }
     }
 
     public override void OnNetworkSpawn()
@@ -52,14 +44,15 @@ public class VoteManager : NetworkBehaviour
 
     private void InitializeVotes()
     {
-        playerVotes = new Dictionary<FixedString32Bytes, int>();
+        if (!IsServer) return;
         
         foreach (var kvp in GameManager.Instance.Players)
         {
+            Debug.Log($"Adding vote for {kvp.Value}");
             playerVotes.Add(kvp.Value, 0);
-            var player = NetworkManager.Singleton.ConnectedClients[kvp.Key].PlayerObject.GetComponent<PlayerState>();
-            CreateVoteButton(kvp.Value, player.SpriteData);
         }
+
+        CreateVoteButtonsClientRpc();
     }
 
     public void StartVote()
@@ -77,20 +70,28 @@ public class VoteManager : NetworkBehaviour
 
     private IEnumerator VotingCoroutine()
     {
-        yield return new WaitForSecondsRealtime(timeToVote);
+        var voteTime = voteScreen.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
+        
+        float elapsedTime = 0f;
+        while (elapsedTime < timeToVote)
+        {
+            yield return new WaitForSecondsRealtime(1f);
+            elapsedTime++;
+            voteTime.text = $"Time left to vote: {timeToVote - elapsedTime}s";
+        }
         ServerStopVoteRpc();
     }
     
     [Rpc(SendTo.Server)]
     private void ServerStopVoteRpc()
     {
-        // Handle stoping the vote
-        // kill the most voted player
         ToggleVoteScreenClientRpc();
         var mostVotedPlayer = playerVotes.Values.Max();
         var mostVotedPlayerId = playerVotes.First(kvp => kvp.Value == mostVotedPlayer).Key;
         Debug.Log($"[{mostVotedPlayerId}] is out");
-        // Kill most voted player
+        eliminatedPlayers.Add(mostVotedPlayerId);
+        GameManager.Instance.RestartDayNightCycle();
+        if (mostVotedPlayerId != string.Empty) GameManager.Instance.Kill(mostVotedPlayerId);
     }
 
     [ClientRpc]
@@ -98,25 +99,97 @@ public class VoteManager : NetworkBehaviour
     {
         voteScreen.SetActive(!voteScreen.activeSelf);
     }
-
-    private void CreateVoteButton(FixedString32Bytes playerName, SpriteRenderer playerSprite)
+    
+    [ClientRpc]
+    private void CreateVoteButtonsClientRpc(ClientRpcParams rpcParams = default)
     {
-        if (!IsClient) return;
+        foreach (var button in votableButtons)
+        {
+            if (button != null) Destroy(button);
+        }
         
+        votableButtons.Clear();
+        playerToButtonMap.Clear();
+        
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        
+        var localPlayerObj = NetworkManager.Singleton.LocalClient.PlayerObject;
+        var localRoleComponent = localPlayerObj.GetComponent<RoleComponent>();
+        
+        bool isKiller = localRoleComponent != null && localRoleComponent.Role == CamperRole.Killer;
+
+        foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
+        {
+            ulong playerNetworkId = kvp.Key;
+
+            var playerObj = kvp.Value.PlayerObject;//NetworkManager.Singleton.ConnectedClients[playerNetworkId].PlayerObject;
+            if (playerObj == null) continue;
+        
+            var playerState = playerObj.GetComponent<PlayerState>();
+            if (playerState == null) continue;
+        
+            var playerSprite = playerState.SpriteData;
+            FixedString32Bytes playerName = playerState.PlayerName.Value;
+            
+            GameObject votableButton = Instantiate(votablePrefab, voteScreen.transform.GetChild(0));
+            var button = votableButton.GetComponentInChildren<Button>();
+            var image = votableButton.transform.GetChild(0).GetComponentInChildren<Image>();
+            var text = votableButton.GetComponentInChildren<TextMeshProUGUI>();
+            
+            var roleComponent = playerObj.GetComponent<RoleComponent>();
+            var playerRole = roleComponent != null ? roleComponent.Role : CamperRole.Camper;
+            
+            image.sprite = playerSprite.sprite;
+            image.color = playerSprite.color;
+            text.text = playerName.ToString();
+            text.color = (isKiller && playerRole == CamperRole.Killer) 
+                ? Color.red : Color.gray;
+
+            if (playerNetworkId != localClientId)
+            {
+                button.onClick.AddListener(() => OnVotableButtonClicked(playerName, localClientId));
+            }
+            else
+            {
+                button.interactable = false;
+            }
+            
+            int buttonId = votableButtons.Count;
+            votableButtons.Add(votableButton);
+            playerToButtonMap.Add(playerName, buttonId);
+
+            if (eliminatedPlayers.Contains(playerName))
+            {
+                button.interactable = false;
+                image.color = Color.gray;
+                votableButton.transform.localScale *= 0.9f;
+
+                var cross = image.transform.GetChild(1);
+                cross.gameObject.SetActive(true);
+            }
+        }
+    }
+    /*
+    [ClientRpc]
+    private void CreateVoteButtonClientRpc(FixedString32Bytes playerName, ulong playerNetworkId, ClientRpcParams rpcParams = default)
+    {
         Debug.Log($"trying to parent to {voteScreen.transform.GetChild(0)}");
         GameObject votableButton = Instantiate(votablePrefab, voteScreen.transform.GetChild(0));
         var button = votableButton.GetComponentInChildren<Button>();
         var image = votableButton.transform.GetChild(0).GetComponentInChildren<Image>();
         var text = votableButton.GetComponentInChildren<TextMeshProUGUI>();
         
-        var pre = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<RoleComponent>();
+        
+        var pre = NetworkManager.Singleton.ConnectedClients[playerNetworkId].PlayerObject.GetComponent<RoleComponent>();//NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<RoleComponent>();
         var playerRole = CamperRole.Camper;
         if (pre != null) 
         {
             playerRole = pre.Role;
         }
         
-        button.onClick.AddListener(() => OnVotableButtonClicked(playerName));
+        var playerSprite = pre.GetComponent<PlayerState>().SpriteData;
+        
+        button.onClick.AddListener(() => OnVotableButtonClicked(playerName, playerNetworkId));
         image.sprite = playerSprite.sprite;
         image.color = playerSprite.color;
         text.text = playerName.ToString();
@@ -125,36 +198,123 @@ public class VoteManager : NetworkBehaviour
         votableButtons.Add(votableButton);
         playerToButtonMap.Add(playerName, votableButtons.FindIndex(t => votableButton));
         Debug.Log($"Created vote button for {playerName} connected to index: {votableButtons.FindIndex(t => votableButton)}");
-    }
+    }*/
 
-    private void OnVotableButtonClicked(FixedString32Bytes votedPlayer)
+    private void OnVotableButtonClicked(FixedString32Bytes votedPlayer, ulong voteeClientId)
     {
-        ServerVoteRpc(votedPlayer);
+        Debug.Log($"Voting for {votedPlayer}");
+        ServerVoteRpc(votedPlayer, voteeClientId);
     }
 
     [Rpc(SendTo.Server)]
-    private void ServerVoteRpc(FixedString32Bytes votedPlayerId)
+    private void ServerVoteRpc(FixedString32Bytes votedPlayerId, ulong voteeClientId, RpcParams rpcParams = default)
     {
-        var clientId = NetworkManager.Singleton.LocalClientId;
-        if (votedClients.Contains(clientId)) return;
+        var senderId = rpcParams.Receive.SenderClientId;
+        if (senderId != voteeClientId)
+        {
+            Debug.Log($"Client {senderId} tried to vote for {votedPlayerId} but was not the votee");
+            return;
+        }
         
-        votedClients.Add(clientId);
+        if (votedClients.Contains(voteeClientId)) return;
+        
+        if (eliminatedPlayers.Contains(votedPlayerId)) return;
+        
+        votedClients.Add(voteeClientId);
         playerVotes[votedPlayerId]++;
-        UpdateVoteClientRpc(votedPlayerId, NetworkManager.Singleton.LocalClientId);
+        Debug.Log($"Client {voteeClientId} voted for {votedPlayerId}. Total votes: {playerVotes[votedPlayerId]}");
+        UpdateVoteClientRpc(votedPlayerId, voteeClientId);
     }
 
     [ClientRpc]
     private void UpdateVoteClientRpc(FixedString32Bytes votedPlayerId, ulong voteeNetworkId, ClientRpcParams rpcParams = default)
     {
+        if (!playerToButtonMap.ContainsKey(votedPlayerId))
+        {
+            return;
+        }
+        
         var votedPlayerIndex = playerToButtonMap[votedPlayerId];
         var votedPlayer = votableButtons[votedPlayerIndex];
-        var votee = Instantiate(voteePrefab, votedPlayer.transform.GetChild(2));
+        
+        if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(voteeNetworkId)) return;
         
         var voteePlayer = NetworkManager.Singleton.ConnectedClients[voteeNetworkId].PlayerObject;
+        if (voteePlayer == null) return;
+        
         var voteeSprite = voteePlayer.GetComponent<PlayerState>().SpriteData;
+        if (voteeSprite == null) return;
+        
+        var votee = Instantiate(voteePrefab, votedPlayer.transform.GetChild(2));
         
         var sprite = votee.GetComponentInChildren<Image>();
         sprite.sprite = voteeSprite.sprite;
         sprite.color = voteeSprite.color;
+    }
+    
+    private void ResetVotes()
+    {
+        votedClients.Clear();
+
+        foreach (var key in playerVotes.Keys.ToList())
+        {
+            playerVotes[key] = 0;
+        }
+
+        ClearVoteesClientRpc();
+    }
+
+    [ClientRpc]
+    private void ClearVoteesClientRpc(ClientRpcParams rpcParams = default)
+    {
+        foreach (var button in votableButtons)
+        {
+            if (button == null) continue;
+
+            var voteeButton = button.transform.GetChild(2);
+            foreach (Transform child in voteeButton)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+    }
+    
+    public void DisablePlayerButton(FixedString32Bytes playerName)
+    {
+        if (!IsServer) return;
+        
+        eliminatedPlayers.Add(playerName);
+        DisablePlayerButtonClientRpc(playerName);
+    }
+
+    [ClientRpc]
+    private void DisablePlayerButtonClientRpc(FixedString32Bytes playerName, ClientRpcParams rpcParams = default)
+    {
+        if (!playerToButtonMap.ContainsKey(playerName))
+        {
+            return;
+        }
+        
+        int buttonId = playerToButtonMap[playerName];
+        var votableButton = votableButtons[buttonId];
+        if (votableButton == null) return;
+        
+        var button = votableButton.GetComponent<Button>();
+        if (button == null) return;
+        
+        button.interactable = false;
+        button.onClick.RemoveAllListeners();
+        
+        var image = votableButton.transform.GetChild(0).GetComponentInChildren<Image>();
+        if (image == null) return;
+        
+        image.color = Color.gray;
+
+        votableButton.transform.localScale = votableButton.transform.localScale * 0.9f;
+        
+        var cross = image.transform.GetChild(1);
+        if (cross == null) return;
+        
+        cross.gameObject.SetActive(true);
     }
 }
