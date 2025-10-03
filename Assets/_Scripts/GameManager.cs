@@ -4,6 +4,7 @@ using Unity.Netcode;
 using Unity.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
@@ -15,6 +16,12 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private NetworkList<Vector3> _playerTransform = new NetworkList<Vector3>();
 
     public NetworkObject BorderN, BorderE, BorderS;
+    
+    private List<Transform> startingTransforms = new();
+    
+    private bool deactivateWalls = true;
+    
+    private bool additionalClientRpcTransform = false;
 
     //public float MinX;
     //public float MaxX;
@@ -34,6 +41,12 @@ public class GameManager : NetworkBehaviour
     private void Awake()
     {
         if (instance == null) instance = this;
+        
+        GameObject startTransformObj = GameObject.Find("playerStarts");
+        for (int i = 0; i < startTransformObj.transform.childCount; i++)
+        {
+            startingTransforms.Add(startTransformObj.transform.GetChild(i).gameObject.transform);
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -70,19 +83,62 @@ public class GameManager : NetworkBehaviour
     private void ServerStartGameRpc(RpcParams rpcParams = default)
     {
         OnGameStarted?.Invoke();
+
+        if (!deactivateWalls)
+        {
+            ServerTryTeleportPlayersRpc();
+        }
+        else
+        {
+            DeactivateBordersClientRpc();
+        }
+        
+        /*
         foreach (var playerId in players)
         {
             GameObject player = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
             Debug.Log("[ServerStartGame] has been called!" + player);
-            BorderN.gameObject.SetActive(false);
-            Debug.Log(BorderN + " Has been turned off");
-            BorderE.gameObject.SetActive(false);
-            Debug.Log(BorderE + " Has been turned off");
-            BorderS.gameObject.SetActive(false);
-            Debug.Log(BorderS + " Has been turned off");
+            
             //Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
             //player.transform.position = randomPosition;
+        }*/
+    }
+
+    [ClientRpc]
+    private void DeactivateBordersClientRpc()
+    {
+        BorderN.gameObject.SetActive(false);
+        Debug.Log(BorderN + " Has been turned off");
+        BorderE.gameObject.SetActive(false);
+        Debug.Log(BorderE + " Has been turned off");
+        BorderS.gameObject.SetActive(false);
+        Debug.Log(BorderS + " Has been turned off");
+    }
+
+    [Rpc(SendTo.Server)]
+    private void ServerTryTeleportPlayersRpc()
+    {
+        foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
+        {
+            Vector3 startPos = startingTransforms[Random.Range(0, startingTransforms.Count - 1)].position;
+            kvp.Value.PlayerObject.gameObject.transform.position = startPos;
+            
+            var clientId = kvp.Key;
+            
+            var clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new [] { clientId } }
+            };
+            
+            if (additionalClientRpcTransform) TryTeleportPlayersClientRpc(startPos, clientRpcParams);
         }
+    }
+    
+    [ClientRpc]
+    private void TryTeleportPlayersClientRpc(Vector3 startPos, ClientRpcParams rpcParams = default)
+    {
+        var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+        player.transform.position = startPos;
     }
 
     private void FixedUpdate()
