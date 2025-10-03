@@ -26,7 +26,6 @@ namespace KillerCamp.TaskSystem
 
         public bool HasFinished { get; protected set; }
 
-
         public void Execute(object owningObject)
         {
             OnStarted();
@@ -68,7 +67,15 @@ namespace KillerCamp.TaskSystem
     {
         [SerializeField] private float taskDuration;
         
+        public float Duration => taskDuration;
+        
         private int _elapsedTime;
+        
+        public TimedTask() {}
+        public TimedTask(float duration)
+        {
+            taskDuration = duration;
+        }
 
         protected override void OnExecute(object owningObject)
         {
@@ -99,6 +106,9 @@ namespace KillerCamp.TaskSystem
     public class KillerTask : TimedTask
     {
         [SerializeField] private TaskObject taskToSabotage;
+
+        public KillerTask() {}
+        public KillerTask(float duration) : base(duration) {}
 
         public TaskObject TaskToSabotage { get => taskToSabotage; set => taskToSabotage = value; }
 

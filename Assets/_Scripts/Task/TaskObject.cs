@@ -18,7 +18,11 @@ namespace KillerCamp.TaskSystem
 
         private void Start()
         {
-            alternativeTask = new KillerTask();
+            float sabotageTime = 3f;
+            if (task is TimedTask timedTask) sabotageTime = timedTask.Duration;
+            
+            alternativeTask = new KillerTask(sabotageTime);
+            
             var killerTask = alternativeTask as KillerTask;
             killerTask.TaskToSabotage = this;
         }
@@ -30,14 +34,14 @@ namespace KillerCamp.TaskSystem
 
         public void Interact()
         {
-            var playerRole = interactedObj.GetComponent<PlayerRoleHandler>().Role;
+            var playerRole = interactedObj.GetComponent<RoleComponent>().Role;
             Debug.Log("Interacting player has role: " + playerRole);
-            if (playerRole == PlayerRole.Camper)
+            if (playerRole == CamperRole.Camper)
             {
                 Debug.Log("Camper is interacting with: " + this);
                 TaskManager.instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
             }
-            else if (playerRole == PlayerRole.Killer)
+            else if (playerRole == CamperRole.Killer)
             {
                 Debug.Log("Killer is interacting with " + this);
                 alternativeTask.Execute(this);

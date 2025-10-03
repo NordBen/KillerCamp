@@ -1,7 +1,5 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -12,6 +10,8 @@ using Unity.Services.Relay.Models;
 
 public class RelayManager : MonoBehaviour
 {
+    [SerializeField] private TMP_Text hostedCode;
+    
     async void Start()
     {
         await UnityServices.InitializeAsync();
@@ -29,6 +29,8 @@ public class RelayManager : MonoBehaviour
         string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
         Debug.Log(joinCode);
+        string hostCodeString = $"Hosted Code: {joinCode}";
+        hostedCode.text = hostCodeString;
 
         var unityTranport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         if (host)
