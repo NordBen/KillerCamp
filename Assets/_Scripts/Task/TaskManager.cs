@@ -44,7 +44,7 @@ namespace KillerCamp.TaskSystem
             InitializeTasks();
         }
 
-        private void OnEnable()
+        private void Start()
         {
             GameManager.instance.OnGameStarted += OnGameStarted_Implementation;
         }
@@ -98,6 +98,11 @@ namespace KillerCamp.TaskSystem
                 
                 ClientUpdateTaskClientRpc(taskIndex, clientRpcParams);
                 taskIndex++;
+            }
+
+            foreach (var kvp in playerTaskMap)
+            {
+                Debug.Log($"[{kvp.Key}] has gotten task #{kvp.Value}");
             }
         }
 
