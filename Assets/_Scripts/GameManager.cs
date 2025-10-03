@@ -72,7 +72,7 @@ public class GameManager : NetworkBehaviour
         OnGameStarted?.Invoke();
         foreach (var playerId in players)
         {
-            GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
+            GameObject player = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
             Debug.Log("[ServerStartGame] has been called!" + player);
             BorderN.SetActive(false);
             Debug.Log(BorderN + " Has been turned off");
