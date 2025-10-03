@@ -14,7 +14,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private NetworkList<Vector3> _playerTransform = new NetworkList<Vector3>();
 
-    public GameObject BorderN, BorderE, BorderS;
+    public NetworkObject BorderN, BorderE, BorderS;
 
     //public float MinX;
     //public float MaxX;
@@ -74,11 +74,11 @@ public class GameManager : NetworkBehaviour
         {
             GameObject player = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
             Debug.Log("[ServerStartGame] has been called!" + player);
-            BorderN.SetActive(false);
+            BorderN.gameObject.SetActive(false);
             Debug.Log(BorderN + " Has been turned off");
-            BorderE.SetActive(false);
+            BorderE.gameObject.SetActive(false);
             Debug.Log(BorderE + " Has been turned off");
-            BorderS.SetActive(false);
+            BorderS.gameObject.SetActive(false);
             Debug.Log(BorderS + " Has been turned off");
             //Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
             //player.transform.position = randomPosition;
