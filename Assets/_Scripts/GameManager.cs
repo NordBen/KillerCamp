@@ -70,8 +70,8 @@ public class GameManager : NetworkBehaviour
         OnGameStarted?.Invoke();
         foreach (var playerId in players)
         {
-            Debug.Log("[ServerStartGame] has been called!" + playerId);
             GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
+            Debug.Log("[ServerStartGame] has been called!" + player);
             Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
             player.transform.position = randomPosition;
         }
