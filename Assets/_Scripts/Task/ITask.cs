@@ -13,7 +13,7 @@ namespace KillerCamp.TaskSystem
         bool HasFinished { get; }
     }
 
-    public enum TaskState { Started, OnGoing, Finished }
+    public enum TaskState { Unassigned, Started, OnGoing, Finished }
 
     [Serializable]
     public class BaseTask : ITask, INetworkSerializable
@@ -22,9 +22,9 @@ namespace KillerCamp.TaskSystem
         
         protected TaskState state;
         public TaskState CurrentState => state;
-        public bool HasStarted { get; private set; }
+        public bool HasStarted { get; protected set; }
 
-        public bool HasFinished { get; private set; }
+        public bool HasFinished { get; protected set; }
 
 
         public void Execute(object owningObject)
@@ -50,6 +50,13 @@ namespace KillerCamp.TaskSystem
             TaskManager.instance.ServerCompleteTaskRpc();
         }
 
+        public void Reset()
+        {
+            HasStarted = false;
+            state = TaskState.Unassigned;
+            HasFinished = false;
+        }
+
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             
@@ -70,6 +77,11 @@ namespace KillerCamp.TaskSystem
                 monoOwner.StartCoroutine(DurationTask());
             }
         }
+        
+        protected virtual void OnTicked()
+        {
+            Debug.Log($"Time elasped {_elapsedTime}");
+        }
 
         private IEnumerator DurationTask()
         {
@@ -78,8 +90,22 @@ namespace KillerCamp.TaskSystem
             {
                 yield return new WaitForSecondsRealtime(1f);
                 _elapsedTime++;
-                Debug.Log($"Time elasped {_elapsedTime}");
+                OnTicked();
             }
+        }
+    }
+
+    [Serializable]
+    public class KillerTask : TimedTask
+    {
+        [SerializeField] private TaskObject taskToSabotage;
+
+        public TaskObject TaskToSabotage { get => taskToSabotage; set => taskToSabotage = value; }
+
+        public override void OnCompleted()
+        {
+            base.OnCompleted();
+            taskToSabotage.TaskType.Reset();
         }
     }
 }

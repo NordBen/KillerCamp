@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using Unity.Netcode;
 using SerializeReferenceEditor;
@@ -8,12 +7,21 @@ namespace KillerCamp.TaskSystem
     public class TaskObject : NetworkBehaviour, IInteract
     {
         [SerializeReference, SR] private BaseTask task;
+        
+        [SerializeReference, SR] private BaseTask alternativeTask;
 
-        public ITask TaskType { get { return task; } }
+        public BaseTask TaskType { get { return task; } }
 
         private bool inInteraction = false;
 
         private GameObject interactedObj;
+
+        private void Start()
+        {
+            alternativeTask = new KillerTask();
+            var killerTask = alternativeTask as KillerTask;
+            killerTask.TaskToSabotage = this;
+        }
 
         public bool CanInteract()
         {
@@ -22,8 +30,18 @@ namespace KillerCamp.TaskSystem
 
         public void Interact()
         {
-            TaskManager.instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
-            //task.Execute(this);
+            var playerRole = interactedObj.GetComponent<PlayerRoleHandler>().Role;
+            Debug.Log("Interacting player has role: " + playerRole);
+            if (playerRole == PlayerRole.Camper)
+            {
+                Debug.Log("Camper is interacting with: " + this);
+                TaskManager.instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
+            }
+            else if (playerRole == PlayerRole.Killer)
+            {
+                Debug.Log("Killer is interacting with " + this);
+                alternativeTask.Execute(this);
+            }
         }
 
         public bool IsInteracting()
@@ -33,13 +51,13 @@ namespace KillerCamp.TaskSystem
 
         private void OnTriggerEnter2D(Collider2D other)
         {
+            interactedObj = other.gameObject;
             Debug.Log($"Collided with {other.gameObject.name}");
             if (other.CompareTag("Player"))
             {
                 Debug.Log("Player entered trigger");
                 inInteraction = true;
-                other.GetComponent<InteractionHandler>().SetInteract(this);
-                interactedObj = other.gameObject;
+                interactedObj.GetComponent<InteractionHandler>().SetInteract(this);
             }
         }
 
@@ -49,23 +67,6 @@ namespace KillerCamp.TaskSystem
             {
                 inInteraction = false;
             }
-        }
-    }
-
-    [System.Serializable]
-    public struct AbstractTask : IEquatable<AbstractTask>
-    {
-        public bool Started => State == TaskState.Started;
-        
-        public TaskState State => Task.CurrentState;
-        
-        public BaseTask Task { get; set; }
-        
-        public ulong Player { get; set; }
-        
-        public bool Equals(AbstractTask other)
-        {
-            return this.Started == other.Started && this.State == other.State && this.Task == other.Task && this.Player == other.Player;
         }
     }
 }

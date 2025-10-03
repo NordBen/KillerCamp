@@ -7,22 +7,11 @@ namespace KillerCamp.TaskSystem
 {
     public class TaskManager : NetworkBehaviour
     {
-        [SerializeField] public List<TaskObjListEntry> tasks = new();
-        
-        [SerializeField] public List<TaskObjEntry> tasksObj = new();
-        
-        [Serializable]
-        public struct TaskObjListEntry
-        {
-            public ulong Player;
-            public TaskObject Task;
+        [SerializeField] public List<TaskObject> tasks = new();
 
-            public TaskObjListEntry(ulong player, TaskObject task)
-            {
-                Player = player;
-                Task = task;
-            }
-        }
+        [SerializeField] public List<TaskObjEntry> tasksObj = new();
+
+        private Dictionary<ulong, int> playerTaskMap = new();
         
         [Serializable]
         public struct TaskObjEntry : INetworkSerializable
@@ -35,7 +24,7 @@ namespace KillerCamp.TaskSystem
                 Player = inPlayer;
                 TaskId = inTaskId;
             }
-            
+
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
                 serializer.SerializeValue(ref Player);
@@ -45,13 +34,13 @@ namespace KillerCamp.TaskSystem
 
         [SerializeField] private bool startWithTask;
         [SerializeField] private bool continousTasks;
-        
+
         public static TaskManager instance;
 
         private void Awake()
         {
             if (instance == null) instance = this;
-            
+
             InitializeTasks();
         }
 
@@ -69,25 +58,50 @@ namespace KillerCamp.TaskSystem
         {
             foreach (var taskObj in FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID))
             {
-                tasks.Add(new TaskObjListEntry(999, taskObj));
+                tasks.Add(taskObj);
             }
-            
+
             for (int i = 0; i < tasks.Count; i++)
             {
                 tasksObj.Add(new TaskObjEntry(999, i));
             }
         }
+        
+        public override void OnNetworkSpawn()
+        {
+            if (IsClient)
+            {
+                ulong clientId = NetworkManager.Singleton.LocalClientId;
+                Debug.Log("[OnNetworkSpawn TaskManager] ClientId: " + clientId);
+            }
 
+            base.OnNetworkSpawn();
+        }
+        
         private void OnGameStarted_Implementation()
         {
-            foreach (var player in NetworkManager.Singleton.ConnectedClients)
+            GivePlayersTask();
+        }
+        
+        public void GivePlayersTask()
+        {
+            int taskIndex = 0;
+            foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
             {
-                var playerId = NetworkManager.Singleton.ConnectedClients[player.Key].PlayerObject.NetworkObjectId;
-                ServerGiveNewTaskObjRpc(playerId);
+                var clientId = kvp.Key;
+                playerTaskMap[clientId] = taskIndex;
+
+                var clientRpcParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams { TargetClientIds = new [] { clientId } }
+                };
+                
+                ClientUpdateTaskClientRpc(taskIndex, clientRpcParams);
+                taskIndex++;
             }
         }
 
-        private int GetTaskId(ulong clientId)
+        private int GetUnassignedTaskId(ulong clientId)
         {
             foreach (var taskObj in tasksObj)
             {
@@ -96,7 +110,7 @@ namespace KillerCamp.TaskSystem
             }
             return -1;
         }
-
+/*
         private TaskObjListEntry GetTaskObjById(int taskId)
         {
             if (taskId == -1)
@@ -104,82 +118,55 @@ namespace KillerCamp.TaskSystem
                 Debug.Log("No task id found");
                 return new TaskObjListEntry();
             }
+
             var task = tasks[taskId];
             if (task.Task != null)
             {
                 return task;
             }
-            return new TaskObjListEntry();
-        }
 
-        public override void OnNetworkSpawn()
-        {
-            if (IsClient)
-            {
-                ulong clientId = NetworkManager.Singleton.LocalClientId;
-                Debug.Log("[OnNetworkSpawn TaskManager] ClientId: " + clientId);
-                //ServerGiveNewTaskObjRpc(clientId);
-            }
-            
-            base.OnNetworkSpawn();
-        }
-        
+            return new TaskObjListEntry();
+        }*/
+
         [Rpc(SendTo.Server)]
         public void TryInteractWithTaskRpc(ulong player)
         {
-            if (HasAuthority)
+            var task = tasks.Find(t => t.TaskType.CurrentState == TaskState.Unassigned);
+            if (task.TaskType != null)
             {
-                var task = tasks.Find(t => t.Player == player && t.Task != null);
-                if (task.Task.TaskType != null)
-                {
-                    task.Task.TaskType.Execute(task.Task);
-                }
-            }
-        }
-        
-        private bool AnyTasksLeft() => tasks.Exists(task => !task.Task.TaskType.HasStarted || !task.Task.TaskType.HasFinished && task.Player == 0);
-        
-        [Rpc(SendTo.Server)]
-        public void ServerGiveNewTaskObjRpc(ulong player)
-        {
-            if (HasAuthority)
-            {
-                TaskObjEntry taskToChange;
-                foreach (var task in tasksObj)
-                {
-                    if (task.Player == 999)
-                    {
-                        Debug.Log("[GiveTask] Found task for Player: " + player);
-                        int taskId = GetTaskId(player);
-                        taskToChange.Player = player;
-                        var taskObjListEntry = GetTaskObjById(taskId);
-                        taskObjListEntry.Player = player;
-                        ClientUpdateTaskRpc(taskId);
-                        return;
-                    }
-                }
+                task.TaskType.Execute(task);
             }
         }
 
-        [Rpc(SendTo.ClientsAndHost)]
-        public void ClientUpdateTaskRpc(int taskId, RpcParams rpcParams = default)
+        private bool AnyTasksLeft() => tasks.Exists(task =>
+            !task.TaskType.HasStarted || !task.TaskType.HasFinished);
+
+        [Rpc(SendTo.Server)]
+        public void ServerGiveNewTaskObjRpc(ulong player)
         {
-            if (NetworkManager.Singleton.IsClient)
+            Debug.Log("[GiveTask] Found task for Player: " + player);
+            int taskId = GetUnassignedTaskId(player);
+            playerTaskMap[player] = taskId;
+            ClientUpdateTaskClientRpc(taskId);
+        }
+
+        [ClientRpc]
+        public void ClientUpdateTaskClientRpc(int taskId, ClientRpcParams rpcParams = default)
+        {
+            var assignedTask = tasks[taskId];
+
+            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+            var taskComponent = player.GetComponent<TaskComponent>();
+
+            if (assignedTask != null)
             {
-                var task = GetTaskObjById(taskId);
-                if (task.Task != null)
-                {
-                    GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
-                    Debug.Log("[Client Upd Task]: " + NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject);
-                    player.GetComponent<TaskComponent>().SetTask(task.Task);
-                }
+                taskComponent.SetTask(assignedTask);
             }
         }
-        
+
         [Rpc(SendTo.Server)]
         public void ServerCompleteTaskRpc()
         {
-            
         }
     }
 }
