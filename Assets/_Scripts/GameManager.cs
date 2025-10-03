@@ -75,8 +75,11 @@ public class GameManager : NetworkBehaviour
             GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
             Debug.Log("[ServerStartGame] has been called!" + player);
             BorderN.SetActive(false);
+            Debug.Log(BorderN + " Has been turned off");
             BorderE.SetActive(false);
+            Debug.Log(BorderE + " Has been turned off");
             BorderS.SetActive(false);
+            Debug.Log(BorderS + " Has been turned off");
             //Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
             //player.transform.position = randomPosition;
         }
