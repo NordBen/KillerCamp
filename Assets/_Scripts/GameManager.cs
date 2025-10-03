@@ -19,9 +19,9 @@ public class GameManager : NetworkBehaviour
     
     private List<Transform> startingTransforms = new();
     
-    private bool deactivateWalls = true;
+    public bool deactivateWalls = true;
     
-    private bool additionalClientRpcTransform = false;
+    public bool additionalClientRpcTransform = false;
 
     //public float MinX;
     //public float MaxX;

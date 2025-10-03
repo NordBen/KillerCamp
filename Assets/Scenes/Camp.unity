@@ -41785,6 +41785,8 @@ MonoBehaviour:
   BorderN: {fileID: 842392404969096625}
   BorderE: {fileID: 4526908519176203015}
   BorderS: {fileID: 2468572734227880790}
+  deactivateWalls: 0
+  additionalClientRpcTransform: 0
   buttonBackground: {fileID: 2093082159}
 --- !u!4 &1806032300
 Transform:
