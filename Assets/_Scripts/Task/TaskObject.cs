@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Netcode;
 using SerializeReferenceEditor;
@@ -25,6 +26,16 @@ namespace KillerCamp.TaskSystem
             
             var killerTask = alternativeTask as KillerTask;
             killerTask.TaskToSabotage = this;
+        }
+
+        private void OnEnable()
+        {
+            TaskType.OnComplete += TaskTypeOnOnComplete;
+        }
+
+        private void TaskTypeOnOnComplete(ITask obj)
+        {
+            TaskManager.instance.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
         }
 
         public bool CanInteract()

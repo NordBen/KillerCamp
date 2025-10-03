@@ -1,10 +1,10 @@
 using KillerCamp;
+using Unity.Netcode;
 using UnityEngine;
 
-public class CarParts : MonoBehaviour, IInteract
+public class CarParts : NetworkBehaviour, IInteract
 {
     private bool inRange;
-    private GameObject currentPlayer;
     public CarScript car;
 
     private AudioSource pickupSound;
@@ -20,7 +20,7 @@ public class CarParts : MonoBehaviour, IInteract
 
     public void Interact()
     {
-        if(inRange && currentPlayer != null)
+        if(inRange)
         {
             PickUp();
             pickupSound.Play();
@@ -34,30 +34,30 @@ public class CarParts : MonoBehaviour, IInteract
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if(currentPlayer != null)
-        {
-            return;
-        }
-        else if(other.CompareTag("Player"))
+        if(other.CompareTag("Player"))
         {
             inRange = true;
-            currentPlayer = other.gameObject;
             other.GetComponent<InteractionHandler>().SetInteract(this);
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player") && other.gameObject == currentPlayer)
+        if (other.CompareTag("Player"))
         {
             inRange = false;
-            currentPlayer = null;
         }
     }
 
     private void PickUp()
     {
-        car.partsCounter++;
-        this.gameObject.SetActive(false);
+        ServerPickUpRpc();
+    }
+
+    [Rpc(SendTo.Server)]
+    private void ServerPickUpRpc()
+    {
+        car.AddPart();
+        gameObject.SetActive(false);
     }
 }

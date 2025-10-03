@@ -4,7 +4,6 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
@@ -12,26 +11,33 @@ using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
-    private NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
-    [SerializeField] private SerializedDictionary<ulong, FixedString32Bytes> playersDict;
-    
+    [SerializeField] 
+    private SerializedDictionary<ulong, FixedString32Bytes> playersDict;
     public Dictionary<ulong, FixedString32Bytes> Players => playersDict;
     
-    [SerializeField] private TMP_Text dayText;
+    private NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
+    
+    [SerializeField] 
+    private TMP_Text dayText;
+    [SerializeField] 
+    private float dayDuration = 90f;
+    
+    [SerializeField] 
+    private GameObject winScreen;
+    public void Win() => WinGame();
+    [SerializeField] 
+    private GameObject loseScreen;
+    public void Lose() => LoseGame();
+
+    [SerializeField] 
+    private Image buttonBackground;
     
     private List<Transform> startingTransforms = new();
+    private NetworkList<bool> playersReady = new();
+    private bool canStartGame = false;
+    private bool rolesAssigned = false;
     
     public Action OnGameStarted;
-
-    private NetworkList<bool> playersReady = new NetworkList<bool>();
-    
-    [SerializeField] private float dayDuration = 90f;
-
-    [SerializeField] private Image buttonBackground;
-    
-    private bool canStartGame = false;
-    
-    private bool rolesAssigned = false;
     
     public static GameManager Instance;
 
@@ -253,5 +259,29 @@ public class GameManager : NetworkBehaviour
         
         playersDict.Remove(clientToKill);
         UpdateList();
+    }
+
+    private void WinGame()
+    {
+        if (!IsServer) return;
+        ToggleWinScreenClientRpc();
+    }
+
+    [ClientRpc]
+    private void ToggleWinScreenClientRpc()
+    {
+        winScreen.SetActive(true);
+    }
+    
+    private void LoseGame()
+    {
+        if (!IsServer) return;
+        ToggleLoseScreenClientRpc();
+    }
+    
+    [ClientRpc]
+    private void ToggleLoseScreenClientRpc()
+    {
+        loseScreen.SetActive(true);
     }
 }

@@ -46,7 +46,6 @@ namespace KillerCamp.TaskSystem
             HasFinished = true;
             state = TaskState.Finished;
             OnComplete?.Invoke(this);
-            TaskManager.instance.ServerCompleteTaskRpc();
         }
 
         public void Reset()
