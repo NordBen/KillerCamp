@@ -12,7 +12,14 @@ public class GameManager : NetworkBehaviour
     public NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
     public Dictionary<ulong, FixedString32Bytes> playersDict;
 
-    [SerializeField] private Transform gameTransform;
+    [SerializeField] private NetworkList<Vector3> _playerTransform = new NetworkList<Vector3>();
+
+    public float MinX;
+    public float MaxX;
+    public float MinY;
+    public float MaxY;
+    public float MinZ;
+    public float MaxZ;
 
     public Action OnGameStarted;
 
@@ -64,7 +71,8 @@ public class GameManager : NetworkBehaviour
         foreach (var playerId in players)
         {
             GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
-            player.transform.position = gameTransform.position;
+            Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
+            player.transform.position = randomPosition;
         }
     }
 

@@ -41368,7 +41368,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   playerName: Humar
-  gameTransform: {fileID: 0}
+  MinX: 110
+  MaxX: 118
+  MinY: -8
+  MaxY: -16
+  MinZ: 0
+  MaxZ: 0
   buttonBackground: {fileID: 2093082159}
 --- !u!4 &1806032300
 Transform:
