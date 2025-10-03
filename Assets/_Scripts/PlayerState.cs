@@ -4,18 +4,21 @@ using Unity.Netcode;
 
 public class PlayerState : NetworkBehaviour
 {
-    [SerializeField] private string playerName;
+    [SerializeField] 
+    private string playerName;
     
-    public PlayerData PlayerData => playerData;
     private PlayerData playerData;
-    private NetworkVariable<Color> playerColor = new ();
-
-    private GameObject carPartOne;
-    private GameObject carPartTwo;
-    private GameObject carPartThree;
+    public PlayerData PlayerData => playerData;
+    
+    private NetworkVariable<Color> playerColor = new();
+    
+    private SpriteRenderer spriteRenderer;
+    public SpriteRenderer SpriteData => spriteRenderer;
 
     public override void OnNetworkSpawn()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        
         if (IsServer)
         {
             playerColor.Value = UnityEngine.Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
@@ -39,7 +42,7 @@ public class PlayerState : NetworkBehaviour
 
     void ApplyColor(Color newColor)
     {
-        GetComponent<SpriteRenderer>().color = newColor;
+        spriteRenderer.color = newColor;
     }
 
     [Rpc(SendTo.Server)]
@@ -59,14 +62,14 @@ public class PlayerState : NetworkBehaviour
 
     private CamperRole GetRole()
     {
-        return CamperRole.Camper;
+        return GetComponent<RoleComponent>().Role;
     }
 
     [Rpc(SendTo.Server)]
     private void AddPlayerToGameServerRpc(RpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
-        GameManager.instance.UpdatePlayer(clientId, playerData.Name);
+        GameManager.Instance.UpdatePlayer(clientId, playerData.Name);
     }
 
     public void AddCarPart(GameObject carPart)
@@ -87,6 +90,3 @@ public struct PlayerData
         Role = inRole;
     }
 }
-
-[Serializable]
-public enum CamperRole { Camper, Killer }

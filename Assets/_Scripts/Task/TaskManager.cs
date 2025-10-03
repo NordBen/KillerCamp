@@ -23,12 +23,12 @@ namespace KillerCamp.TaskSystem
 
         private void Start()
         {
-            GameManager.instance.OnGameStarted += OnGameStarted_Implementation;
+            GameManager.Instance.OnGameStarted += OnGameStarted_Implementation;
         }
 
         private void OnDisable()
         {
-            GameManager.instance.OnGameStarted -= OnGameStarted_Implementation;
+            GameManager.Instance.OnGameStarted -= OnGameStarted_Implementation;
         }
 
         void InitializeTasks()

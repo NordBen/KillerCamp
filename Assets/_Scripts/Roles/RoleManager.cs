@@ -34,12 +34,11 @@ public class RoleManager : NetworkBehaviour
         {
             if (i == killerIndex)
             {
-                players[i].SetRole(PlayerRole.Killer);
+                players[i].SetRole(CamperRole.Killer);
+                continue;
             }
-            else
-            {
-                players[i].SetRole(PlayerRole.Camper);
-            }
+
+            players[i].SetRole(CamperRole.Camper);
         }
 
         Debug.Log($"Player {killerIndex} is the Killer, rest are Campers.");

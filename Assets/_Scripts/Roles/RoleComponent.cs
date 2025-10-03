@@ -4,9 +4,9 @@ using TMPro;
 
 public class RoleComponent : NetworkBehaviour
 {
-    private NetworkVariable<PlayerRole> role = new(PlayerRole.Camper);
+    private NetworkVariable<CamperRole> role = new(CamperRole.Camper);
     
-    public PlayerRole Role => role.Value;
+    public CamperRole Role => role.Value;
 
     [SerializeField] private TextMeshProUGUI roleText;
 
@@ -22,12 +22,12 @@ public class RoleComponent : NetworkBehaviour
         OnRoleChanged(role.Value, role.Value);
     }
 
-    private void OnRoleChanged(PlayerRole previous, PlayerRole current)
+    private void OnRoleChanged(CamperRole previous, CamperRole current)
     {
         if (IsOwner && roleText != null)
         {
             roleText.text = $"Role: {current}";
-            roleText.color = (current == PlayerRole.Killer) ? Color.red : Color.green;
+            roleText.color = (current == CamperRole.Killer) ? Color.red : Color.green;
         }
 
         // // Optional: change player color
@@ -38,7 +38,7 @@ public class RoleComponent : NetworkBehaviour
         // }
     }
 
-    public void SetRole(PlayerRole newRole)
+    public void SetRole(CamperRole newRole)
     {
         if (IsServer)
         {

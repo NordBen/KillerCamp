@@ -10,7 +10,9 @@ using Random = UnityEngine.Random;
 public class GameManager : NetworkBehaviour
 {
     private NetworkList<FixedString32Bytes> players = new NetworkList<FixedString32Bytes>();
-    private Dictionary<ulong, FixedString32Bytes> playersDict;
+    [SerializeField] private Dictionary<ulong, FixedString32Bytes> playersDict;
+    
+    public Dictionary<ulong, FixedString32Bytes> Players => playersDict;
     
     private List<Transform> startingTransforms = new();
     
@@ -26,11 +28,11 @@ public class GameManager : NetworkBehaviour
     
     private bool rolesAssigned = false;
     
-    public static GameManager instance;
+    public static GameManager Instance;
 
     private void Awake()
     {
-        if (instance == null) instance = this;
+        if (Instance == null) Instance = this;
         
         GameObject startTransformObj = GameObject.Find("playerStarts");
         for (int i = 0; i < startTransformObj.transform.childCount; i++)
@@ -75,7 +77,10 @@ public class GameManager : NetworkBehaviour
         if(IsServer)
         {
             Debug.Log($"Client Connected {obj} ");
-            playersDict.TryAdd(obj, new FixedString32Bytes());
+            //playersDict.TryAdd(obj, new FixedString32Bytes());
+            var playerData = NetworkManager.Singleton.ConnectedClients[obj].PlayerObject.GetComponent<PlayerState>();
+            var playerName = (playerData.PlayerData.Name != String.Empty) ? (FixedString32Bytes)playerData.PlayerData.Name : new FixedString32Bytes("bob");
+            playersDict.TryAdd(obj, playerName);
             UpdateList();
             playersReady.Add(false);
         }
@@ -83,6 +88,8 @@ public class GameManager : NetworkBehaviour
 
     private void TryStartGame()
     {
+        if (canStartGame) return;
+        
         foreach (var playerReady in playersReady)
         {
             if (!playerReady) return;
@@ -95,17 +102,18 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerStartGameRpc(RpcParams rpcParams = default)
     {
-        OnGameStarted?.Invoke();
-        
         if (RoleManager.Instance != null && RoleManager.Instance.PlayerCount > 0)
         {
             RoleManager.Instance.AssignRoles();
             rolesAssigned = true;
         }
-
-        StartCoroutine(DayNightCycle());
         
         ServerTeleportPlayersRpc();
+        
+        StartCoroutine(DayNightCycle());
+        buttonBackground.gameObject.SetActive(false);
+        
+        OnGameStarted?.Invoke();
     }
 
     [Rpc(SendTo.Server)]
@@ -176,7 +184,13 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator DayNightCycle()
     {
-        return new WaitForSecondsRealtime(dayDuration);
+        var elapsedTime = 0;
+        while (elapsedTime < dayDuration)
+        {
+            yield return new WaitForSecondsRealtime(1);
+            elapsedTime++;
+        }
+        
         ServerStartVoting();
     }
 
