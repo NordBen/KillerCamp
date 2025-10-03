@@ -41,12 +41,12 @@ public class PlayerRoleHandler : NetworkBehaviour
             roleText.color = (current == PlayerRole.Killer) ? Color.red : Color.green;
         }
 
-        // Optional: change player color
-        var rend = GetComponent<Renderer>();
-        if (rend != null)
-        {
-            rend.material.color = (current == PlayerRole.Killer) ? Color.red : Color.green;
-        }
+        // // Optional: change player color
+        // var rend = GetComponent<Renderer>();
+        // if (rend != null)
+        // {
+        //     rend.material.color = (current == PlayerRole.Killer) ? Color.red : Color.green;
+        // }
     }
 
     public void SetRole(PlayerRole newRole)
