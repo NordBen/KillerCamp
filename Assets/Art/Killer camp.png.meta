@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 41db3b11a970446e4af91657203d8f75
+guid: 151019162b96e494a8ced3ef29000eea
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4978720854848556097
-    second: Camp Killers background_0
+      213: 3112048850790536862
+    second: Killer camp_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Camp Killers background_0
+      name: Killer camp_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 14cc3153d38f71540800000000000000
-      internalID: 4978720854848556097
+      spriteID: e96580301f7303b20800000000000000
+      internalID: 3112048850790536862
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Camp Killers background_0: 4978720854848556097
+      Killer camp_0: 3112048850790536862
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
