@@ -17,7 +17,10 @@ public class DayManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //players.Length = NetworkManager.Singleton.ConnectedClients.Count;
+        for (int i = 0; i < NetworkManager.Singleton.ConnectedClients.Count; i++)
+        {
+
+        }
         StartCoroutine(NightCycle());
     }
 
