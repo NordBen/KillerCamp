@@ -14,12 +14,14 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private NetworkList<Vector3> _playerTransform = new NetworkList<Vector3>();
 
-    public float MinX;
-    public float MaxX;
-    public float MinY;
-    public float MaxY;
-    public float MinZ;
-    public float MaxZ;
+    public GameObject BorderN, BorderE, BorderS;
+
+    //public float MinX;
+    //public float MaxX;
+    //public float MinY;
+    //public float MaxY;
+    //public float MinZ;
+    //public float MaxZ;
 
     public Action OnGameStarted;
 
@@ -72,8 +74,11 @@ public class GameManager : NetworkBehaviour
         {
             GameObject player = NetworkManager.Singleton.ConnectedClients[rpcParams.Receive.SenderClientId].PlayerObject.gameObject;
             Debug.Log("[ServerStartGame] has been called!" + player);
-            Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
-            player.transform.position = randomPosition;
+            BorderN.SetActive(false);
+            BorderE.SetActive(false);
+            BorderS.SetActive(false);
+            //Vector3 randomPosition = new Vector3 (UnityEngine.Random.Range(MinX, MaxX), UnityEngine.Random.Range(MinY, MaxY), UnityEngine.Random.Range(MinZ, MaxZ));
+            //player.transform.position = randomPosition;
         }
     }
 
