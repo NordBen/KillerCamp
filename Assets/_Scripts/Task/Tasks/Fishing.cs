@@ -7,9 +7,16 @@ public class Fishing : MonoBehaviour, IInteract
 
     [SerializeField] private GameObject currentPlayer;
     [SerializeField] private float cooldown = 5f;
+    private AudioSource fishingSound;
+
+    private void Awake()
+    {
+        fishingSound = GetComponent<AudioSource>();
+    }
     public void Interact()
     {
         Debug.Log("Player started fishing");
+        fishingSound.Play();
     }
 
     public bool CanInteract()

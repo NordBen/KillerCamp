@@ -7,9 +7,17 @@ public class Berry : NetworkBehaviour, IInteract
 
     [SerializeField] private GameObject currentPlayer;
     [SerializeField] private float cooldown = 3f;
+    private AudioSource berrypickingSound;
+
+    private void Awake()
+    {
+        berrypickingSound = GetComponent<AudioSource>();
+    }
+  
     public void Interact()
     {
         Debug.Log("Is interacting");
+        berrypickingSound.Play();
     }
 
     public bool CanInteract()

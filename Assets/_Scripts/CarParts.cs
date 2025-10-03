@@ -7,6 +7,12 @@ public class CarParts : MonoBehaviour, IInteract
     private GameObject currentPlayer;
     public CarScript car;
 
+    private AudioSource pickupSound;
+
+    private void Awake()
+    {
+        pickupSound = GetComponent<AudioSource>();
+    }
     public bool CanInteract()
     {
         return inRange;
@@ -17,6 +23,7 @@ public class CarParts : MonoBehaviour, IInteract
         if(inRange && currentPlayer != null)
         {
             PickUp();
+            pickupSound.Play();
         }
     }
 

@@ -6,6 +6,12 @@ public class CarScript : MonoBehaviour, IInteract
     public int partsCounter = 0;
     private bool inRange = false;
 
+    private AudioSource carSound;
+
+    private void Awake()
+    {
+        carSound = GetComponent<AudioSource>();
+    }
     public bool CanInteract()
     {
         return inRange;
@@ -17,6 +23,7 @@ public class CarScript : MonoBehaviour, IInteract
         {
             CheckParts();
             Debug.Log("Checking parts");
+            carSound.Play();
         }
     }
 
