@@ -88,6 +88,8 @@ public class GameManager : NetworkBehaviour
 
     private void TryStartGame()
     {
+        if (!IsServer) return;
+        
         if (canStartGame) return;
         
         foreach (var playerReady in playersReady)
@@ -196,7 +198,7 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void SetPlayerReadyRpc(RpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
         playersReady[(int)clientId] = !playersReady[(int)clientId];
         UpdateReadyButtonClientRpc();
         TryStartGame();

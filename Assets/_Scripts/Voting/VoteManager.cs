@@ -25,8 +25,8 @@ public class VoteManager : NetworkBehaviour
     [SerializeField] private SerializedDictionary<FixedString32Bytes, int> playerVotes = new();
     [SerializeField] private SerializedDictionary<FixedString32Bytes, int> playerToButtonMap = new();
     private List<GameObject> votableButtons = new();
-    private HashSet<ulong> votedClients = new();
-    private List<FixedString32Bytes> eliminatedPlayers = new();
+    private NetworkList<ulong> votedClients = new();
+    private NetworkList<FixedString32Bytes> eliminatedPlayers = new();
     
     public static VoteManager Singleton;
 

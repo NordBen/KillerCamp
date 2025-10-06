@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -28,14 +29,14 @@ namespace KillerCamp.TaskSystem
 
         public bool HasFinished { get; protected set; }
 
-        public void Execute(object owningObject)
+        public async void Execute(object owningObject)
         {
             OnStarted();
-            OnExecute(owningObject);
+            await OnExecute(owningObject);
             OnCompleted();
         }
 
-        protected virtual void OnExecute(object owningObject) { }
+        protected virtual async Task OnExecute(object owningObject) { }
         
         public virtual void OnStarted()
         {
@@ -80,7 +81,7 @@ namespace KillerCamp.TaskSystem
             taskDuration = duration;
         }
 
-        protected override void OnExecute(object owningObject)
+        protected override async Task OnExecute(object owningObject)
         {
             if (owningObject is MonoBehaviour monoOwner)
             {

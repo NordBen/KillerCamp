@@ -59,11 +59,12 @@ namespace KillerCamp.TaskSystem
             
             foreach (var client in NetworkManager.Singleton.ConnectedClients)
             {
-                AssignTaskToPlayer(client.Key);
+                AssignTaskToPlayerRpc(client.Key);
             }
         }
 
-        private void AssignTaskToPlayer(ulong clientId)
+        [Rpc(SendTo.Server)]
+        private void AssignTaskToPlayerRpc(ulong clientId)
         {
             int taskId = GetUnassignedTaskId(clientId);
             if (taskId == -1) return;
@@ -77,7 +78,7 @@ namespace KillerCamp.TaskSystem
         [ClientRpc]
         private void UpdateClientTaskClientRpc(ulong clientId, int taskId, ClientRpcParams rpcParams = default)
         {
-            if (NetworkManager.Singleton.LocalClientId != clientId) return;
+            //if (NetworkManager.Singleton.LocalClientId != clientId) return;
             
             var assignedTask = tasks[taskId];
             
@@ -113,7 +114,7 @@ namespace KillerCamp.TaskSystem
             
             completedTask.gameObject.SetActive(false);
             
-            AssignTaskToPlayer(playerClientId);
+            AssignTaskToPlayerRpc(playerClientId);
         }
         
         [Rpc(SendTo.Server)]
@@ -254,7 +255,7 @@ namespace KillerCamp.TaskSystem
         public void TryInteractWithTaskRpc(ulong taskNetworkObjectId, RpcParams rpcParams = default)
         {
             ulong playerClientId = rpcParams.Receive.SenderClientId;
-
+            
             if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(playerClientId, out var client)) return;
 
             var playerObj = client.PlayerObject;
@@ -308,7 +309,7 @@ namespace KillerCamp.TaskSystem
             // finish task
             //completedTask.TaskType.CurrentState = TaskState.Finished;
             
-            CompleteTaskForAllClientsClientRpc(completedTaskId);
+            //CompleteTaskForAllClientsClientRpc(completedTaskId);
             
             int newTaskId = GetUnassignedTaskId(playerClientId);
             
@@ -318,17 +319,6 @@ namespace KillerCamp.TaskSystem
                 // update task state to started
                 UpdateTaskForAllClientsClientRpc(playerClientId, newTaskId);
             }
-        }
-        
-        [ClientRpc]
-        private void CompleteTaskForAllClientsClientRpc(int taskId)
-        {
-            if (taskId < 0 || taskId >= tasks.Count) return;
-            
-            // finish task
-            //tasks[taskId].TaskType.HasFinished = true;
-            
-            //Set visual of task
         }
     }
 }

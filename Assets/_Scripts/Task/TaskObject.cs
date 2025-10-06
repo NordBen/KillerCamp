@@ -21,7 +21,7 @@ namespace KillerCamp.TaskSystem
 
         private GameObject interactedObj;
 
-        private void Start()
+        public override void OnNetworkSpawn()
         {
             float sabotageTime = 3f;
             if (task is TimedTask timedTask) sabotageTime = timedTask.Duration;
@@ -30,17 +30,21 @@ namespace KillerCamp.TaskSystem
             
             var killerTask = alternativeTask as KillerTask;
             killerTask.TaskToSabotage = this;
+            
+            TaskType.OnComplete += TaskTypeOnOnComplete;
+            base.OnNetworkSpawn();
         }
 
-        private void OnEnable()
+        public override void OnNetworkDespawn()
         {
-            TaskType.OnComplete += TaskTypeOnOnComplete;
+            TaskType.OnComplete -= TaskTypeOnOnComplete;
+            base.OnNetworkDespawn();
         }
 
         private void TaskTypeOnOnComplete(ITask obj)
         {
             var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-            TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);//.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
+            //TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);//.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
         }
 
         public bool CanInteract()
