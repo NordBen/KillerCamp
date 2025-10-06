@@ -44,7 +44,7 @@ namespace KillerCamp.TaskSystem
         private void TaskTypeOnOnComplete(ITask obj)
         {
             var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-            //TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);//.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
+            TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);//.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
         }
 
         public bool CanInteract()
@@ -54,20 +54,10 @@ namespace KillerCamp.TaskSystem
 
         public void Interact()
         {
-            var playerRole = interactedObj.GetComponent<RoleComponent>().Role;
-            Debug.Log("Interacting player has role: " + playerRole);
-            if (playerRole == CamperRole.Camper)
-            {
-                Debug.Log("Camper is interacting with: " + this);
-                //TaskManager.Instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
-                var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-                TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, player.GetComponent<NetworkObject>().OwnerClientId);
-            }
-            else if (playerRole == CamperRole.Killer)
-            {/*
-                Debug.Log("Killer is interacting with " + this);
-                alternativeTask.Execute(this);*/
-            }
+            Debug.Log("Camper is interacting with: " + this);
+            //TaskManager.Instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
+            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+            TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, player.GetComponent<NetworkObject>().OwnerClientId);
         }
 
         public bool IsInteracting()
@@ -95,11 +85,18 @@ namespace KillerCamp.TaskSystem
             }
         }
 
-        public void ExecuteTask(bool isKiller = false)
+        public void ExecuteTask(ulong playerClientId, bool isKiller = false)
         {
             taskToExecute = isKiller ? alternativeTask : task;
             taskToExecute.Execute(this);
-            
+            ShowTaskUIClientRpc(playerClientId);
+        }
+        
+        [ClientRpc]
+        public void ShowTaskUIClientRpc(ulong playerClientId)
+        {
+
+            if (NetworkManager.Singleton.LocalClientId != playerClientId) return;
             taskUI.SetActive(true);
 
             if (taskToExecute is TimedTask timedTaskToExecute)

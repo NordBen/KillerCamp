@@ -11,49 +11,41 @@ using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
-    [SerializeField] 
-    private SerializedDictionary<ulong, FixedString32Bytes> playersDict;
+    [SerializeField] private SerializedDictionary<ulong, FixedString32Bytes> playersDict;
     public Dictionary<ulong, FixedString32Bytes> Players => playersDict;
-    
+
     private NetworkList<FixedString32Bytes> players = new();
-    
-    [SerializeField] 
-    private TMP_Text dayText;
-    [SerializeField] 
-    private float dayDuration = 90f;
-    [SerializeField] 
-    private GameObject dayHUD;
-    
-    [SerializeField] 
-    private GameObject winScreen;
+
+    [SerializeField] private TMP_Text dayText;
+    [SerializeField] private float dayDuration = 90f;
+    [SerializeField] private GameObject dayHUD;
+
+    [SerializeField] private GameObject winScreen;
     public void Win() => WinGame();
-    [SerializeField] 
-    private GameObject loseScreen;
+    [SerializeField] private GameObject loseScreen;
     public void Lose() => LoseGame();
-    
-    [SerializeField] 
-    private GameObject playerStartTransform;
+
+    [SerializeField] private GameObject playerStartTransform;
 
     private NetworkVariable<int> gameElapsedTime = new(0);
 
-    [SerializeField] 
-    private Image buttonBackground;
-    
+    [SerializeField] private Image buttonBackground;
+
     private Dictionary<ulong, Vector3> playerStartPositions = new();
     private List<Transform> startingTransforms = new();
     private NetworkList<bool> playersReady = new();
     private bool canStartGame = false;
     private bool rolesAssigned = false;
-    
+
     public Action OnGameStarted;
-    
+
     public static GameManager Instance;
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
-        
+
         for (int i = 0; i < playerStartTransform.transform.childCount; i++)
         {
             startingTransforms.Add(playerStartTransform.transform.GetChild(i).gameObject.transform);
@@ -68,18 +60,41 @@ public class GameManager : NetworkBehaviour
             playersDict = new SerializedDictionary<ulong, FixedString32Bytes>();
             NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
         }
+
         gameElapsedTime.OnValueChanged += UpdateDayHUDClientRpc;
-        
+
+        if (IsClient)
+        {
+            playersReady.OnListChanged += PlayersReadyListChanged;
+        }
+
         base.OnNetworkSpawn();
     }
-    
-    private void Singleton_OnClientConnectedCallback(ulong obj)
+
+    private void PlayersReadyListChanged(NetworkListEvent<bool> changeEvent)
+    {
+        if (NetworkManager.Singleton.LocalClientId == (ulong)changeEvent.Index)
+        {
+            if(changeEvent.Value)
+            {
+                buttonBackground.color = Color.green;
+            }
+            else
+            {
+                buttonBackground.color = Color.white;
+            }
+        }
+    }
+
+private void Singleton_OnClientConnectedCallback(ulong obj)
     {
         if(IsServer)
         {
             Debug.Log($"Client Connected {obj} ");
             var playerData = NetworkManager.Singleton.ConnectedClients[obj].PlayerObject.GetComponent<PlayerState>();
-            var playerName = (playerData.PlayerData.Name != String.Empty) ? playerData.PlayerData.Name : new FixedString32Bytes("Player" + playersDict.Count + 1);
+            var playerName = (!playerData.PlayerData.Name.IsEmpty) ? playerData.PlayerData.Name : new FixedString32Bytes("Player" + playersDict.Count + 1);
+            
+            Debug.Log($"Setting name for client {obj}: {playerName} ");
             playersDict.TryAdd(obj, playerName);
             UpdateList();
             playersReady.Add(false);
@@ -88,8 +103,6 @@ public class GameManager : NetworkBehaviour
 
     private void TryStartGame()
     {
-        if (!IsServer) return;
-        
         if (canStartGame) return;
         
         foreach (var playerReady in playersReady)
@@ -198,13 +211,13 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void SetPlayerReadyRpc(RpcParams rpcParams = default)
     {
-        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        ulong clientId = rpcParams.Receive.SenderClientId;
         playersReady[(int)clientId] = !playersReady[(int)clientId];
-        UpdateReadyButtonClientRpc();
+        //UpdateReadyButtonClientRpc();
         TryStartGame();
     }
 
-    [ClientRpc]
+    /*[ClientRpc]
     private void UpdateReadyButtonClientRpc()
     {
         if (!NetworkManager.Singleton.IsConnectedClient) return;
@@ -219,7 +232,7 @@ public class GameManager : NetworkBehaviour
                 buttonBackground.color = Color.white;
             }
         }
-    }
+    }*/
 
     public void SetPlayerReady()
     {

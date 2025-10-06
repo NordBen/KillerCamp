@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using System.Linq;
 
 namespace KillerCamp.TaskSystem
 {
@@ -66,23 +67,37 @@ namespace KillerCamp.TaskSystem
         [Rpc(SendTo.Server)]
         private void AssignTaskToPlayerRpc(ulong clientId)
         {
-            int taskId = GetUnassignedTaskId(clientId);
-            if (taskId == -1) return;
+            ulong taskId = GetUnassignedTaskId(clientId);
+            if (taskId == 0) return;
             
-            playerTaskMap[clientId] = taskId;
-            tasks[taskId].SetState(TaskState.Assigned);
+            var task = tasks.First(t => t.NetworkObjectId == taskId);
+            task.SetState(TaskState.Assigned);
+            playerTaskMap[clientId] = tasks.IndexOf(task);
             
             UpdateClientTaskClientRpc(clientId, taskId);
         }
+        
+        private ulong GetUnassignedTaskId(ulong clientId)
+        {
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                if (tasks[i].TaskType.CurrentState == TaskState.Unassigned)
+                {
+                    return tasks[i].NetworkObjectId;
+                }
+            }
+            return 0;
+        }
 
         [ClientRpc]
-        private void UpdateClientTaskClientRpc(ulong clientId, int taskId, ClientRpcParams rpcParams = default)
+        private void UpdateClientTaskClientRpc(ulong clientId, ulong taskId, ClientRpcParams rpcParams = default)
         {
-            //if (NetworkManager.Singleton.LocalClientId != clientId) return;
-            
-            var assignedTask = tasks[taskId];
-            
-            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+            if (NetworkManager.Singleton.LocalClientId != clientId) return;
+
+            var assignedTask = GameObject.FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID)
+                .First(bh => bh.NetworkObjectId == taskId);
+
+            var player = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;//NetworkManager.Singleton.LocalClient.PlayerObject;
             var taskComponent = player.GetComponent<TaskComponent>();
             if (taskComponent == null) return;
             
@@ -141,11 +156,11 @@ namespace KillerCamp.TaskSystem
 
             if (roleComponent.Role == CamperRole.Killer)
             {
-                taskObj.ExecuteTask(true);
+                taskObj.ExecuteTask(playerClientId, true);
             }
             else if (roleComponent.Role == CamperRole.Camper && tasks[assignedTaskId] == taskObj)
             {
-                taskObj.ExecuteTask();
+                taskObj.ExecuteTask(playerClientId);
             }
             else
             {
@@ -202,39 +217,6 @@ namespace KillerCamp.TaskSystem
             }
 
             //tasks[taskId].SetTaskVisual(true);
-        }
-
-        private int GetUnassignedTaskId(ulong clientId)
-        {
-            for (int i = 0; i < tasks.Count; i++)
-            {
-                if (tasks[i].TaskType.CurrentState == TaskState.Unassigned)
-                {
-                    /*
-                    bool isAssigned = false;
-                    foreach (var kvp in playerTaskMap)
-                    {
-                        if (kvp.Value == 1)
-                        {
-                            isAssigned = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!isAssigned) return i;*/
-                    return i;
-                }
-            }
-            return -1;
-        }
-        
-        [Rpc(SendTo.Server)]
-        public void ServerGiveNewTaskObjRpc(ulong player)
-        {
-            Debug.Log("[GiveTask] Found task for Player: " + player);
-            int taskId = GetUnassignedTaskId(player);
-            playerTaskMap[player] = taskId;
-            ClientUpdateTaskClientRpc(taskId);
         }
         
         [ClientRpc]
@@ -305,20 +287,6 @@ namespace KillerCamp.TaskSystem
             }
             
             if (completedTask == null) return;
-
-            // finish task
-            //completedTask.TaskType.CurrentState = TaskState.Finished;
-            
-            //CompleteTaskForAllClientsClientRpc(completedTaskId);
-            
-            int newTaskId = GetUnassignedTaskId(playerClientId);
-            
-            if (newTaskId != -1)
-            {
-                playerTaskMap[playerClientId] = newTaskId;
-                // update task state to started
-                UpdateTaskForAllClientsClientRpc(playerClientId, newTaskId);
-            }
         }
     }
 }

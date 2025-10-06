@@ -86,6 +86,8 @@ namespace KillerCamp.TaskSystem
             if (owningObject is MonoBehaviour monoOwner)
             {
                 monoOwner.StartCoroutine(DurationTask());
+                while (!coroutineFinished)
+                    await Task.Yield();
             }
         }
         
@@ -95,8 +97,10 @@ namespace KillerCamp.TaskSystem
             OnTickedEvent?.Invoke(_elapsedTime);
         }
 
+        private bool coroutineFinished;
         private IEnumerator DurationTask()
         {
+            coroutineFinished = false;
             state = TaskState.OnGoing;
             while (_elapsedTime < taskDuration)
             {
@@ -104,6 +108,7 @@ namespace KillerCamp.TaskSystem
                 _elapsedTime++;
                 OnTicked();
             }
+            coroutineFinished = true;
         }
     }
 

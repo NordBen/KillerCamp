@@ -32,9 +32,8 @@ public class PlayerState : NetworkBehaviour
         {
             //var ServerController = FindObjectOfType<ServerController>();
             //playerName = ServerController.PlayerName;
-            playerName.Value = playerNames[Random.Range(0, playerNames.Length)];
             
-            AddPlayerToGameServerRpc(playerName.Value, GetRole());
+            AddPlayerToGameServerRpc(playerNames[Random.Range(0, playerNames.Length)], GetRole());
         }
         Debug.Log("Player spawned");
 
@@ -61,9 +60,11 @@ public class PlayerState : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void AddPlayerToGameServerRpc(FixedString32Bytes name, CamperRole role, RpcParams rpcParams = default)
     {
+        Debug.Log(name.ToString());
+        playerName.Value = name;
         playerData.Value = new PlayerData(name, role);
         ulong clientId = rpcParams.Receive.SenderClientId;
-        GameManager.Instance.UpdatePlayer(clientId, playerData.Name);
+        GameManager.Instance.UpdatePlayer(clientId, name);
     }
 }
 
