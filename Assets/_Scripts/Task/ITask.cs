@@ -19,7 +19,7 @@ namespace KillerCamp.TaskSystem
     [Serializable]
     public class BaseTask : ITask, INetworkSerializable
     {
-        public event Action<ITask> OnComplete;
+        public event Action OnComplete;
         
         protected TaskState state;
         public TaskState CurrentState => state;
@@ -48,7 +48,7 @@ namespace KillerCamp.TaskSystem
         {
             HasFinished = true;
             //state = TaskState.Finished;
-            OnComplete?.Invoke(this);
+            OnComplete?.Invoke();
         }
 
         public void Reset()

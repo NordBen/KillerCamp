@@ -311,14 +311,14 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientToKill, out var client))
         { 
             var playerObj = client.PlayerObject;
-
+                
+            NetworkManager.Singleton.DisconnectClient(clientToKill);
+            
             if (playerObj != null)
             {
                 playerObj.GetComponent<NetworkObject>().Despawn();
                 Destroy(playerObj.gameObject);
             }
-                
-            NetworkManager.Singleton.DisconnectClient(clientToKill);
         }
         
         playersDict.Remove(clientToKill);

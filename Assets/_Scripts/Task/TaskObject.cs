@@ -41,7 +41,7 @@ namespace KillerCamp.TaskSystem
             base.OnNetworkDespawn();
         }
 
-        private void TaskTypeOnOnComplete(ITask obj)
+        private void TaskTypeOnOnComplete()
         {
             var player = NetworkManager.Singleton.LocalClient.PlayerObject;
             TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);
@@ -87,30 +87,43 @@ namespace KillerCamp.TaskSystem
 
         public void ExecuteTask(ulong playerClientId, bool isKiller = false)
         {
+            Debug.Log($"[null test] alter: {alternativeTask == null} - task: {task == null}");
+            Debug.Log($"[timed task test] alter is {alternativeTask is TimedTask} - task is {task is TimedTask}");
             taskToExecute = isKiller ? alternativeTask : task;
             taskToExecute.Execute(this);
-            ShowTaskUIClientRpc(playerClientId);
+            ShowTaskUIClientRpc(playerClientId, taskToExecute);
+            
+            Debug.Log($"taskToExecute type: {taskToExecute.GetType().FullName}");
+            
+            Debug.Log($"[timedtask + null check] tasktoexec: {taskToExecute != null && taskToExecute is TimedTask}");
+            if (taskToExecute is TimedTask timedTaskToExecute)
+            {
+                Debug.Log("IT IS TIMED TASK");
+                timedTaskToExecute.OnTickedEvent += (time) => UpdateTimedTaskUIClientRpc(time);
+                timedTaskToExecute.OnComplete += () =>  UnsubscribleTickUIClientRpc();
+            }
+            else
+            {
+                Debug.Log("[ExecuteTask] no timed task to execute");
+            }
+            
+            taskToExecute.OnComplete += () => DisableTaskUIClientRpc();
         }
         
         [ClientRpc]
-        public void ShowTaskUIClientRpc(ulong playerClientId)
+        public void ShowTaskUIClientRpc(ulong playerClientId, BaseTask taskToExecuteV)
         {
-
+            Debug.Log($"[ShowTaskUIClientRpc] Showing task first {taskToExecute}");
+            this.taskToExecute  = taskToExecuteV;
             if (NetworkManager.Singleton.LocalClientId != playerClientId) return;
             taskUI.SetActive(true);
-
-            if (taskToExecute is TimedTask timedTaskToExecute)
-            {
-                timedTaskToExecute.OnTickedEvent += UpdateTimedTaskUIClientRpc;
-                timedTaskToExecute.OnComplete += UnsubscribleTickUI;
-            }
-
-            taskToExecute.OnComplete += DisableTaskUI;
+            Debug.Log($"[ShowTaskUIClientRpc] Showing task end {taskToExecute}");
         }
 
         [ClientRpc]
         private void UpdateTimedTaskUIClientRpc(int elapsedTime)
         {
+            Debug.Log($"trying to Update timedtask elapsedTime: {elapsedTime}");
             float displayedTime = 0;
             if (taskToExecute is TimedTask timedTaskToExecute)
             {
@@ -123,18 +136,29 @@ namespace KillerCamp.TaskSystem
             string timeString = $"Time to complete: {displayedTime}";//displayedTime.ToString("0.0");
             
             uiText.text = timeString;
-            Debug.Log(timeString);
+            Debug.Log($"[UpdateTimedTaskUIClientRpc] : {timeString}");
         }
 
-        private void UnsubscribleTickUI(ITask taskToUnsubscribe)
+        [ClientRpc]
+        private void UnsubscribleTickUIClientRpc()
         {
+            Debug.Log($"Unsubscribing tick UI client");
+            ServerUnsubTickUIRpc();
+        }
+
+        [Rpc(SendTo.Server)]
+        private void ServerUnsubTickUIRpc()
+        {
+            Debug.Log("[ServerUnsubTickUIRpc] Unsubsricbing frp, TickUI Server ");
             if (taskToExecute is TimedTask timedTaskToExecute)
             {
+                Debug.Log("[ServerUnsubTickUIRpc] task to execute timed");
                 timedTaskToExecute.OnTickedEvent -= UpdateTimedTaskUIClientRpc;
             }
         }
 
-        private void DisableTaskUI(ITask taskToDisable)
+        [ClientRpc]
+        private void DisableTaskUIClientRpc()
         {
             taskUI.SetActive(false);
         }
