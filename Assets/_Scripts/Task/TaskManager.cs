@@ -7,34 +7,24 @@ namespace KillerCamp.TaskSystem
     public class TaskManager : NetworkBehaviour
     {
         [SerializeField] public List<TaskObject> tasks = new();
+        
+        [SerializeField] private GameObject wrongTask;
 
         private Dictionary<ulong, int> playerTaskMap = new();
 
         [SerializeField] private bool startWithTask;
         [SerializeField] private bool continousTasks;
 
-        public static TaskManager instance;
+        public static TaskManager Instance;
 
         private void Awake()
         {
-            if (instance == null) instance = this;
-            if (startWithTask) InitializeTasks();
-        }
-
-        private void Start()
-        {
-            GameManager.Instance.OnGameStarted += OnGameStarted_Implementation;
-        }
-
-        private void OnDisable()
-        {
-            GameManager.Instance.OnGameStarted -= OnGameStarted_Implementation;
+            if (Instance == null) Instance = this;
+            else Destroy(gameObject);
         }
 
         void InitializeTasks()
         {
-            if (!IsServer) return;
-            
             foreach (var taskObj in FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID))
             {
                 tasks.Add(taskObj);
@@ -43,18 +33,135 @@ namespace KillerCamp.TaskSystem
         
         public override void OnNetworkSpawn()
         {
-            if (IsClient)
+            if (IsServer)
             {
-                ulong clientId = NetworkManager.Singleton.LocalClientId;
-                Debug.Log("[OnNetworkSpawn TaskManager] ClientId: " + clientId);
+                InitializeTasks();
+                GameManager.Instance.OnGameStarted += OnGameStarted_Implementation;
             }
 
             base.OnNetworkSpawn();
         }
-        
+
+        public override void OnNetworkDespawn()
+        {
+            GameManager.Instance.OnGameStarted -= OnGameStarted_Implementation;
+            base.OnNetworkDespawn();
+        }
+
         private void OnGameStarted_Implementation()
         {
-            GivePlayersTask();
+            AssignInitialTasks();
+        }
+
+        private void AssignInitialTasks()
+        {
+            if (!IsServer) return;
+            
+            foreach (var client in NetworkManager.Singleton.ConnectedClients)
+            {
+                AssignTaskToPlayer(client.Key);
+            }
+        }
+
+        private void AssignTaskToPlayer(ulong clientId)
+        {
+            int taskId = GetUnassignedTaskId(clientId);
+            if (taskId == -1) return;
+            
+            playerTaskMap[clientId] = taskId;
+            tasks[taskId].SetState(TaskState.Assigned);
+            
+            UpdateClientTaskClientRpc(clientId, taskId);
+        }
+
+        [ClientRpc]
+        private void UpdateClientTaskClientRpc(ulong clientId, int taskId, ClientRpcParams rpcParams = default)
+        {
+            if (NetworkManager.Singleton.LocalClientId != clientId) return;
+            
+            var assignedTask = tasks[taskId];
+            
+            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+            var taskComponent = player.GetComponent<TaskComponent>();
+            if (taskComponent == null) return;
+            
+            taskComponent.SetTask(assignedTask);
+
+            var line = assignedTask.gameObject.AddComponent<LineRenderer>();
+            if (line == null) return;
+            
+            line.material = new Material(Shader.Find("Sprites/Default"));
+            line.startWidth = 0.05f;
+            line.endWidth = 0.05f;
+            line.sortingOrder = 10;
+            
+            line.positionCount = 2;
+            line.SetPosition(0, player.transform.position);
+            line.SetPosition(1, assignedTask.transform.position);
+        }
+
+        [Rpc(SendTo.Server)]
+        public void ServerCompleteTaskRpc(ulong playerClientId)
+        {
+            if (!playerTaskMap.TryGetValue(playerClientId, out int completedTaskIndex)) return;
+
+            var completedTask = tasks[completedTaskIndex];
+            completedTask.SetState(TaskState.Finished);
+            
+            var line = completedTask.gameObject.GetComponent<LineRenderer>();
+            if (line != null) Destroy(line);
+            
+            completedTask.gameObject.SetActive(false);
+            
+            AssignTaskToPlayer(playerClientId);
+        }
+        
+        [Rpc(SendTo.Server)]
+        public void ServerTryInteractTaskRpc(ulong taskNetworkObjectId, ulong playerClientId)
+        {
+            if (!playerTaskMap.TryGetValue(playerClientId, out int assignedTaskId))
+            {
+                Debug.Log("Player not assigned to task");
+                return;
+            }
+
+            var taskObj = tasks.Find(t => t.NetworkObjectId == taskNetworkObjectId);
+            if (taskObj == null)
+            {
+                Debug.Log("TaskObj not found");
+                return;
+            }
+            
+            var player = NetworkManager.Singleton.ConnectedClients[playerClientId].PlayerObject;
+            if (player == null) return;
+            
+            var roleComponent = player.GetComponent<RoleComponent>();
+            if (roleComponent == null) return;
+
+            if (roleComponent.Role == CamperRole.Killer)
+            {
+                taskObj.ExecuteTask(true);
+            }
+            else if (roleComponent.Role == CamperRole.Camper && tasks[assignedTaskId] == taskObj)
+            {
+                taskObj.ExecuteTask();
+            }
+            else
+            {
+                WrongTaskClientRpc();
+            }
+        }
+        
+        [ClientRpc]
+        public void WrongTaskClientRpc(ClientRpcParams rpcParams = default)
+        {
+            wrongTask.SetActive(true);
+            Invoke(nameof(DeactivateWrongTask), 2f);
+        }
+        
+        void DeactivateWrongTask()
+        {
+            wrongTask.SetActive(false);
         }
         
         public void GivePlayersTask()
@@ -102,6 +209,7 @@ namespace KillerCamp.TaskSystem
             {
                 if (tasks[i].TaskType.CurrentState == TaskState.Unassigned)
                 {
+                    /*
                     bool isAssigned = false;
                     foreach (var kvp in playerTaskMap)
                     {
@@ -112,7 +220,8 @@ namespace KillerCamp.TaskSystem
                         }
                     }
                     
-                    if (!isAssigned) return i;
+                    if (!isAssigned) return i;*/
+                    return i;
                 }
             }
             return -1;

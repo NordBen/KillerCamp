@@ -22,8 +22,7 @@ public class CarParts : NetworkBehaviour, IInteract
     {
         if(inRange)
         {
-            PickUp();
-            pickupSound.Play();
+            ServerTryPickupRpc();
         }
     }
 
@@ -49,15 +48,17 @@ public class CarParts : NetworkBehaviour, IInteract
         }
     }
 
-    private void PickUp()
-    {
-        ServerPickUpRpc();
-    }
-
     [Rpc(SendTo.Server)]
-    private void ServerPickUpRpc()
+    private void ServerTryPickupRpc()
     {
         car.AddPart();
+        PickupClientRpc();
         gameObject.SetActive(false);
+    }
+    
+    [ClientRpc]
+    private void PickupClientRpc()
+    {
+        if (pickupSound != null) pickupSound.Play();
     }
 }

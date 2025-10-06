@@ -6,8 +6,7 @@ using UnityEngine;
 public class CarScript : NetworkBehaviour, IInteract
 {
     [SerializeField] 
-    private int partsCounter = 0;
-    public int Parts { get => partsCounter; set => partsCounter = value; }
+    private NetworkVariable<int> partsCounter = new(0);
     
     [SerializeField]
     private List<Sprite> carSprites;
@@ -32,9 +31,8 @@ public class CarScript : NetworkBehaviour, IInteract
     {
         if (inRange)
         {
-            CheckParts();
             Debug.Log("Checking parts");
-            carSound.Play();
+            ServerTryInteractWithCarRpc();
         }
     }
 
@@ -45,9 +43,11 @@ public class CarScript : NetworkBehaviour, IInteract
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log("Help");
-        inRange = true;
-        other.GetComponent<InteractionHandler>().SetInteract(this);
+        if (other.CompareTag("Player"))
+        {
+            inRange = true;
+            other.GetComponent<InteractionHandler>().SetInteract(this);
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
@@ -55,29 +55,39 @@ public class CarScript : NetworkBehaviour, IInteract
         inRange = false;
     }
 
-    private void CheckParts()
+    [Rpc(SendTo.Server)]
+    private void ServerTryInteractWithCarRpc()
     {
-        if(partsCounter >= 3)
+        if (partsCounter.Value >= 3)
         {
-            Debug.Log("You won!");
             GameManager.Instance.Win();
         }
-        else
-        {
-            Debug.Log("Not enough parts");
-            GameManager.Instance.Lose();
-        }
+        
+        CarInteractedClientRpc();
     }
 
     public void AddPart()
     {
-        ServerAddPartRpc();
+        if (!IsServer) return;//ServerAddPartRpc();
+        
+        partsCounter.Value++;
+        UpdateCarSpriteClientRpc();
     }
 
-    [Rpc(SendTo.Server)]
-    private void ServerAddPartRpc()
+    [ClientRpc]
+    private void CarInteractedClientRpc()
     {
-        partsCounter++;
-        spriteRenderer.sprite = carSprites[partsCounter - 1];
+        if (carSound != null) carSound.Play();
+    }
+
+    [ClientRpc]
+    private void UpdateCarSpriteClientRpc()
+    {
+        int carSprite = 0;
+        if (partsCounter.Value > 2)
+        {
+            carSprite = 1;
+        }
+        spriteRenderer.sprite = carSprites[carSprite];
     }
 }

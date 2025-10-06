@@ -13,7 +13,7 @@ namespace KillerCamp.TaskSystem
         bool HasFinished { get; }
     }
 
-    public enum TaskState { Unassigned, Started, OnGoing, Finished }
+    public enum TaskState { Unassigned, Assigned, Started, OnGoing, Finished }
 
     [Serializable]
     public class BaseTask : ITask, INetworkSerializable
@@ -22,6 +22,8 @@ namespace KillerCamp.TaskSystem
         
         protected TaskState state;
         public TaskState CurrentState => state;
+        public void SetState(TaskState newState) => state = newState;
+        
         public bool HasStarted { get; protected set; }
 
         public bool HasFinished { get; protected set; }
@@ -38,13 +40,13 @@ namespace KillerCamp.TaskSystem
         public virtual void OnStarted()
         {
             HasStarted = true;
-            state = TaskState.Started;
+            //state = TaskState.Started;
         }
 
         public virtual void OnCompleted()
         {
             HasFinished = true;
-            state = TaskState.Finished;
+            //state = TaskState.Finished;
             OnComplete?.Invoke(this);
         }
 
@@ -70,6 +72,8 @@ namespace KillerCamp.TaskSystem
         
         private int _elapsedTime;
         
+        public event Action<int> OnTickedEvent;
+        
         public TimedTask() {}
         public TimedTask(float duration)
         {
@@ -87,6 +91,7 @@ namespace KillerCamp.TaskSystem
         protected virtual void OnTicked()
         {
             Debug.Log($"Time elasped {_elapsedTime}");
+            OnTickedEvent?.Invoke(_elapsedTime);
         }
 
         private IEnumerator DurationTask()

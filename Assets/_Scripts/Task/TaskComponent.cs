@@ -16,7 +16,7 @@ namespace KillerCamp.TaskSystem
 
         private void UpdateTask()
         {
-            currentTask.gameObject.SetActive(false);
+            
         }
     }
 }

@@ -51,6 +51,7 @@ public class VoteManager : NetworkBehaviour
             Debug.Log($"Adding vote for {kvp.Value}");
             playerVotes.Add(kvp.Value, 0);
         }
+        playerVotes.Add(new FixedString32Bytes("Skip"), 0);
 
         CreateVoteButtonsClientRpc();
     }
@@ -60,12 +61,6 @@ public class VoteManager : NetworkBehaviour
         if (!IsServer) return;
         ToggleVoteScreenClientRpc();
         StartCoroutine(VotingCoroutine());
-    }
-
-    [Rpc(SendTo.Server)]
-    private void ServerStartVoteRpc()
-    {
-        StartVote();
     }
 
     private IEnumerator VotingCoroutine()
@@ -87,10 +82,15 @@ public class VoteManager : NetworkBehaviour
     {
         ToggleVoteScreenClientRpc();
         var mostVotedPlayer = playerVotes.Values.Max();
+        
+        GameManager.Instance.RestartDayNightCycle();
+        
+        if (mostVotedPlayer == 0) return;
+        
         var mostVotedPlayerId = playerVotes.First(kvp => kvp.Value == mostVotedPlayer).Key;
         Debug.Log($"[{mostVotedPlayerId}] is out");
         eliminatedPlayers.Add(mostVotedPlayerId);
-        GameManager.Instance.RestartDayNightCycle();
+        
         if (mostVotedPlayerId != string.Empty) GameManager.Instance.Kill(mostVotedPlayerId);
     }
 
@@ -222,7 +222,7 @@ public class VoteManager : NetworkBehaviour
         
         votedClients.Add(voteeClientId);
         playerVotes[votedPlayerId]++;
-        Debug.Log($"Client {voteeClientId} voted for {votedPlayerId}. Total votes: {playerVotes[votedPlayerId]}");
+        Debug.Log($"Client {voteeClientId} voted for {votedPlayerId}:Client {GameManager.Instance.Players.Where(t => t.Value == votedPlayerId)}. Total votes: {playerVotes[votedPlayerId]}");
         UpdateVoteClientRpc(votedPlayerId, voteeClientId);
     }
 
@@ -241,6 +241,8 @@ public class VoteManager : NetworkBehaviour
         
         var voteePlayer = NetworkManager.Singleton.ConnectedClients[voteeNetworkId].PlayerObject;
         if (voteePlayer == null) return;
+        
+        Debug.Log($"Adding vote for {votedPlayerId} by {voteePlayer.name}");
         
         var voteeSprite = voteePlayer.GetComponent<PlayerState>().SpriteData;
         if (voteeSprite == null) return;
@@ -310,11 +312,20 @@ public class VoteManager : NetworkBehaviour
         
         image.color = Color.gray;
 
-        votableButton.transform.localScale = votableButton.transform.localScale * 0.9f;
+        votableButton.transform.localScale *= 0.9f;
         
         var cross = image.transform.GetChild(1);
         if (cross == null) return;
         
         cross.gameObject.SetActive(true);
+    }
+
+    private void SkipVote()
+    {
+        var skipVoteButton = Instantiate(votablePrefab);
+        var skipButton = skipVoteButton.GetComponent<Button>();
+        if (skipButton == null) return;
+        
+        skipButton.onClick.AddListener(() => ServerVoteRpc(new FixedString32Bytes("Skip"), NetworkManager.Singleton.LocalClientId));
     }
 }

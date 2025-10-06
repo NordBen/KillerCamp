@@ -16,10 +16,11 @@ namespace KillerCamp
         
         public IInteract Interactable { get => interactable; set => interactable = value; }
 
-        public void SetInteract(IInteract inInteractable)
+        public void SetInteract(IInteract inInteractable, GameObject inHitObj = null)
         {
             Interacting = true;
             interactable = inInteractable;
+            hitObj = inHitObj;
         }
 
         void Update()

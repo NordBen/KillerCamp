@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Unity.Netcode;
 using SerializeReferenceEditor;
+using TMPro;
 
 namespace KillerCamp.TaskSystem
 {
@@ -10,10 +11,13 @@ namespace KillerCamp.TaskSystem
         [SerializeReference, SR] private BaseTask task;
         
         [SerializeReference, SR] private BaseTask alternativeTask;
+        
+        [SerializeField] private GameObject taskUI;
 
         public BaseTask TaskType { get { return task; } }
 
         private bool inInteraction = false;
+        private BaseTask taskToExecute;
 
         private GameObject interactedObj;
 
@@ -35,12 +39,13 @@ namespace KillerCamp.TaskSystem
 
         private void TaskTypeOnOnComplete(ITask obj)
         {
-            TaskManager.instance.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
+            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+            TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);//.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
         }
 
         public bool CanInteract()
         {
-            return task.CurrentState != TaskState.Finished;
+            return task.CurrentState != TaskState.Unassigned;
         }
 
         public void Interact()
@@ -50,12 +55,14 @@ namespace KillerCamp.TaskSystem
             if (playerRole == CamperRole.Camper)
             {
                 Debug.Log("Camper is interacting with: " + this);
-                TaskManager.instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
+                //TaskManager.Instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
+                var player = NetworkManager.Singleton.LocalClient.PlayerObject;
+                TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, player.GetComponent<NetworkObject>().OwnerClientId);
             }
             else if (playerRole == CamperRole.Killer)
-            {
+            {/*
                 Debug.Log("Killer is interacting with " + this);
-                alternativeTask.Execute(this);
+                alternativeTask.Execute(this);*/
             }
         }
 
@@ -72,7 +79,7 @@ namespace KillerCamp.TaskSystem
             {
                 Debug.Log("Player entered trigger");
                 inInteraction = true;
-                interactedObj.GetComponent<InteractionHandler>().SetInteract(this);
+                interactedObj.GetComponent<InteractionHandler>().SetInteract(this, gameObject);
             }
         }
 
@@ -82,6 +89,61 @@ namespace KillerCamp.TaskSystem
             {
                 inInteraction = false;
             }
+        }
+
+        public void ExecuteTask(bool isKiller = false)
+        {
+            taskToExecute = isKiller ? alternativeTask : task;
+            taskToExecute.Execute(this);
+            
+            taskUI.SetActive(true);
+
+            if (taskToExecute is TimedTask timedTaskToExecute)
+            {
+                timedTaskToExecute.OnTickedEvent += UpdateTimedTaskUIClientRpc;
+                timedTaskToExecute.OnComplete += UnsubscribleTickUI;
+            }
+
+            taskToExecute.OnComplete += DisableTaskUI;
+        }
+
+        [ClientRpc]
+        private void UpdateTimedTaskUIClientRpc(int elapsedTime)
+        {
+            float displayedTime = 0;
+            if (taskToExecute is TimedTask timedTaskToExecute)
+            {
+                displayedTime = timedTaskToExecute.Duration - elapsedTime;
+            }
+
+            var uiText = taskUI.GetComponentInChildren<TMP_Text>();
+            if (uiText == null) return;
+
+            string timeString = $"Time to complete: {displayedTime}";//displayedTime.ToString("0.0");
+            
+            uiText.text = timeString;
+            Debug.Log(timeString);
+        }
+
+        private void UnsubscribleTickUI(ITask taskToUnsubscribe)
+        {
+            if (taskToExecute is TimedTask timedTaskToExecute)
+            {
+                timedTaskToExecute.OnTickedEvent -= UpdateTimedTaskUIClientRpc;
+            }
+        }
+
+        private void DisableTaskUI(ITask taskToDisable)
+        {
+            taskUI.SetActive(false);
+        }
+
+        public void SetState(TaskState newState)
+        {
+            if (task.CurrentState == newState) return;
+            
+            task.SetState(newState);
+            Debug.Log("Task state changed to: " + newState);
         }
     }
 }
