@@ -135,11 +135,11 @@ namespace KillerCamp.TaskSystem
         [Rpc(SendTo.Server)]
         public void ServerTryInteractTaskRpc(ulong taskNetworkObjectId, ulong playerClientId)
         {
-            if (!playerTaskMap.TryGetValue(playerClientId, out int assignedTaskId))
-            {
-                Debug.Log("Player not assigned to task");
-                return;
-            }
+            var player = NetworkManager.Singleton.ConnectedClients[playerClientId].PlayerObject;
+            if (player == null) return;
+            
+            var roleComponent = player.GetComponent<RoleComponent>();
+            if (roleComponent == null) return;
 
             var taskObj = tasks.Find(t => t.NetworkObjectId == taskNetworkObjectId);
             if (taskObj == null)
@@ -147,19 +147,21 @@ namespace KillerCamp.TaskSystem
                 Debug.Log("TaskObj not found");
                 return;
             }
-            
-            var player = NetworkManager.Singleton.ConnectedClients[playerClientId].PlayerObject;
-            if (player == null) return;
-            
-            var roleComponent = player.GetComponent<RoleComponent>();
-            if (roleComponent == null) return;
 
             if (roleComponent.Role == CamperRole.Killer)
             {
                 taskObj.ExecuteTask(playerClientId, true);
             }
-            else if (roleComponent.Role == CamperRole.Camper && tasks[assignedTaskId] == taskObj)
+            else if (roleComponent.Role == CamperRole.Camper)
             {
+                if (!playerTaskMap.TryGetValue(playerClientId, out int assignedTaskId))
+                {
+                    Debug.Log("Player not assigned to task");
+                    return;
+                }
+                
+                if (tasks[assignedTaskId] != taskObj) return;
+                
                 taskObj.ExecuteTask(playerClientId);
             }
             else

@@ -13,17 +13,17 @@ namespace KillerCamp.TaskSystem
         [SerializeReference, SR] private BaseTask alternativeTask;
         
         [SerializeField] private GameObject taskUI;
+        private TMP_Text taskUIText;
 
         public BaseTask TaskType { get { return task; } }
 
         private bool inInteraction = false;
-        private BaseTask taskToExecute;
 
         private GameObject interactedObj;
 
         public override void OnNetworkSpawn()
         {
-            float sabotageTime = 3f;
+            int sabotageTime = 3;
             if (task is TimedTask timedTask) sabotageTime = timedTask.Duration;
             
             alternativeTask = new KillerTask(sabotageTime);
@@ -32,6 +32,8 @@ namespace KillerCamp.TaskSystem
             killerTask.TaskToSabotage = this;
             
             TaskType.OnComplete += TaskTypeOnOnComplete;
+            
+            taskUIText = taskUI.GetComponentInChildren<TMP_Text>();
             base.OnNetworkSpawn();
         }
 
@@ -87,73 +89,59 @@ namespace KillerCamp.TaskSystem
 
         public void ExecuteTask(ulong playerClientId, bool isKiller = false)
         {
-            Debug.Log($"[null test] alter: {alternativeTask == null} - task: {task == null}");
-            Debug.Log($"[timed task test] alter is {alternativeTask is TimedTask} - task is {task is TimedTask}");
-            taskToExecute = isKiller ? alternativeTask : task;
+            BaseTask taskToExecute;
+            if (isKiller) taskToExecute = alternativeTask;
+            else taskToExecute = task;
+            
             taskToExecute.Execute(this);
-            ShowTaskUIClientRpc(playerClientId, taskToExecute);
+            ShowTaskUIClientRpc(playerClientId);
             
-            Debug.Log($"taskToExecute type: {taskToExecute.GetType().FullName}");
-            
-            Debug.Log($"[timedtask + null check] tasktoexec: {taskToExecute != null && taskToExecute is TimedTask}");
             if (taskToExecute is TimedTask timedTaskToExecute)
             {
-                Debug.Log("IT IS TIMED TASK");
-                timedTaskToExecute.OnTickedEvent += (time) => UpdateTimedTaskUIClientRpc(time);
-                timedTaskToExecute.OnComplete += () =>  UnsubscribleTickUIClientRpc();
-            }
-            else
-            {
-                Debug.Log("[ExecuteTask] no timed task to execute");
+                timedTaskToExecute.OnTickedEvent += (elapsedTime) => UpdateTimedTaskUIClientRpc(elapsedTime, isKiller);
+                timedTaskToExecute.OnComplete += () => UnsubscribleTickUIClientRpc(isKiller);
             }
             
             taskToExecute.OnComplete += () => DisableTaskUIClientRpc();
         }
         
         [ClientRpc]
-        public void ShowTaskUIClientRpc(ulong playerClientId, BaseTask taskToExecuteV)
+        public void ShowTaskUIClientRpc(ulong playerClientId)
         {
-            Debug.Log($"[ShowTaskUIClientRpc] Showing task first {taskToExecute}");
-            this.taskToExecute  = taskToExecuteV;
             if (NetworkManager.Singleton.LocalClientId != playerClientId) return;
             taskUI.SetActive(true);
-            Debug.Log($"[ShowTaskUIClientRpc] Showing task end {taskToExecute}");
         }
 
         [ClientRpc]
-        private void UpdateTimedTaskUIClientRpc(int elapsedTime)
+        private void UpdateTimedTaskUIClientRpc(int elapsedTime, bool isKiller = false)
         {
-            Debug.Log($"trying to Update timedtask elapsedTime: {elapsedTime}");
-            float displayedTime = 0;
-            if (taskToExecute is TimedTask timedTaskToExecute)
-            {
-                displayedTime = timedTaskToExecute.Duration - elapsedTime;
-            }
-
-            var uiText = taskUI.GetComponentInChildren<TMP_Text>();
-            if (uiText == null) return;
-
-            string timeString = $"Time to complete: {displayedTime}";//displayedTime.ToString("0.0");
+            if (taskUIText == null) return;
             
-            uiText.text = timeString;
-            Debug.Log($"[UpdateTimedTaskUIClientRpc] : {timeString}");
+            int startDuration = 3;
+            if (isKiller && alternativeTask is KillerTask killerTask) startDuration = killerTask.Duration;
+            else if (task is TimedTask timedTask) startDuration = timedTask.Duration;
+            
+            int displayedTime = startDuration - elapsedTime;
+            string timeString = $"Time to complete: {displayedTime}";
+            taskUIText.text = timeString;
         }
 
         [ClientRpc]
-        private void UnsubscribleTickUIClientRpc()
+        private void UnsubscribleTickUIClientRpc(bool isKiller = false)
         {
-            Debug.Log($"Unsubscribing tick UI client");
-            ServerUnsubTickUIRpc();
+            ServerUnsubTickUIRpc(isKiller);
         }
 
         [Rpc(SendTo.Server)]
-        private void ServerUnsubTickUIRpc()
+        private void ServerUnsubTickUIRpc(bool iskiller = false)
         {
-            Debug.Log("[ServerUnsubTickUIRpc] Unsubsricbing frp, TickUI Server ");
-            if (taskToExecute is TimedTask timedTaskToExecute)
+            BaseTask taskToUnsubscribeFrom = null;
+            if (iskiller && alternativeTask is KillerTask killerTask) taskToUnsubscribeFrom = killerTask;
+            else if (task is TimedTask timedTask) taskToUnsubscribeFrom = timedTask;
+
+            if (taskToUnsubscribeFrom != null && taskToUnsubscribeFrom is TimedTask timedTaskToUnsubscribeFrom)
             {
-                Debug.Log("[ServerUnsubTickUIRpc] task to execute timed");
-                timedTaskToExecute.OnTickedEvent -= UpdateTimedTaskUIClientRpc;
+                timedTaskToUnsubscribeFrom.OnTickedEvent -= (time) => UpdateTimedTaskUIClientRpc(time, iskiller);
             }
         }
 

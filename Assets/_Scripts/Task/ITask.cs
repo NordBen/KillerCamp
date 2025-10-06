@@ -67,16 +67,16 @@ namespace KillerCamp.TaskSystem
     [Serializable]
     public class TimedTask : BaseTask
     {
-        [SerializeField] private float taskDuration;
+        [SerializeField] private int taskDuration;
         
-        public float Duration => taskDuration;
+        public int Duration => taskDuration;
         
         private int _elapsedTime;
         
         public event Action<int> OnTickedEvent;
         
         public TimedTask() {}
-        public TimedTask(float duration)
+        public TimedTask(int duration)
         {
             taskDuration = duration;
         }
@@ -101,6 +101,7 @@ namespace KillerCamp.TaskSystem
         private IEnumerator DurationTask()
         {
             coroutineFinished = false;
+            _elapsedTime = 0;
             state = TaskState.OnGoing;
             while (_elapsedTime < taskDuration)
             {
@@ -118,7 +119,7 @@ namespace KillerCamp.TaskSystem
         [SerializeField] private TaskObject taskToSabotage;
 
         public KillerTask() {}
-        public KillerTask(float duration) : base(duration) {}
+        public KillerTask(int duration) : base(duration) {}
 
         public TaskObject TaskToSabotage { get => taskToSabotage; set => taskToSabotage = value; }
 
