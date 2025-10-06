@@ -44,7 +44,7 @@ namespace KillerCamp.TaskSystem
         private void TaskTypeOnOnComplete(ITask obj)
         {
             var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-            TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);//.ServerCompleteTaskRpc(GetComponent<NetworkObject>().NetworkObjectId);
+            TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId);
         }
 
         public bool CanInteract()
