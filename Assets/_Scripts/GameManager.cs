@@ -42,6 +42,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private int totalRounds = 3;
     private NetworkVariable<int> roundsplayed = new(0);
+    private bool killersWon = false;
 
     public Action OnGameStarted;
 
@@ -152,11 +153,10 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         }
 
         ToggleReadyButtonClientRpc();
-        ToggleLoseScreenClientRpc();
-        ToggleWinScreenClientRpc();
+        
+        if (killersWon) ToggleLoseScreenClientRpc();
+        else ToggleWinScreenClientRpc();
     }
-    
-    
 
     [ClientRpc]
     private void ToggleReadyButtonClientRpc()
@@ -353,6 +353,8 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
             if (roleComponent.Role == CamperRole.Killer) ToggleLoseScreenClientRpc();
             else ToggleWinScreenClientRpc();
         }
+
+        killersWon = false;
     }
 
     [ClientRpc]
@@ -375,6 +377,8 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
             if (roleComponent.Role == CamperRole.Killer) ToggleWinScreenClientRpc();
             else ToggleLoseScreenClientRpc();
         }
+
+        killersWon = true;
     }
     
     [ClientRpc]

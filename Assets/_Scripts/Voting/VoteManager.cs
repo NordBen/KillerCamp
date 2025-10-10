@@ -46,6 +46,8 @@ public class VoteManager : NetworkBehaviour
     {
         if (!IsServer) return;
         
+        playerVotes.Clear();
+        
         foreach (var kvp in GameManager.Instance.Players)
         {
             Debug.Log($"Adding vote for {kvp.Value}");
