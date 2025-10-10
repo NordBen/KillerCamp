@@ -150,9 +150,6 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         {
             playersReady[i] = false;
         }
-        
-        ToggleWinScreenClientRpc();
-        ToggleReadyButtonClientRpc();
 
         ToggleReadyButtonClientRpc();
     }

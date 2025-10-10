@@ -51601,6 +51601,10 @@ PrefabInstance:
       value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 626299611461658479, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
+      propertyPath: totalRounds
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 626299611461658479, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: buttonBackground
       value: 
       objectReference: {fileID: 2093082159}
