@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using TMPro;
 using Unity.Collections;
 using UnityEngine;
@@ -22,7 +23,7 @@ public class PlayerState : NetworkBehaviour
     private SpriteRenderer spriteRenderer;
     public SpriteRenderer SpriteData => spriteRenderer;
     
-    private FixedString32Bytes[] playerNames = {"Bob", "Alice", "Carol", "Dave", "Eve", "Frank", "George", "Harry", "Ian", "Jane"};
+    private FixedString32Bytes[] playerNames = {"Frank", "Maya", "Mikael", "Benjamin", "Trond Olav", "Halldór", "Inga", "Hilmir", "Steven", "Ivar", "Einar", "Marcela", "Lara", "Nico", "Valdi", "Rares", "Emma", "David", "Andreas", "Gabriel", "Ari", "Víctor", "Helga", "Adam", "Chris", "TO"};
 
     public override void OnNetworkSpawn()
     {
