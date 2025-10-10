@@ -75,7 +75,7 @@ public class PlayerState : NetworkBehaviour
     [ClientRpc]
     private void SetupPlayerNameTagsClientRpc(ClientRpcParams rpcParams = default)
     {
-        nameTagText.text = playerData.Name.ToString();
+        nameTagText.text = playerName.Value.ToString();
     }
 }
 
