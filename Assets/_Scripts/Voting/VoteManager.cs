@@ -84,18 +84,31 @@ public class VoteManager : NetworkBehaviour
         VoteTimeUnsubscribtionClientRpc();
         ToggleVoteScreenClientRpc();
         int highestVote = playerVotes.Values.Max();
+        Debug.Log($"Highest vote is {highestVote}");
+        
         var mostVotedPlayers = playerVotes.Where(votedPlayer => votedPlayer.Value == highestVote).Select(votedPlayer => votedPlayer.Key).ToList();
+        Debug.Log($"there was {mostVotedPlayers.Count} players with {highestVote} votes");
 
-        if (mostVotedPlayers.Count > 1 && highestVote <= 0) return;
+        if (mostVotedPlayers.Count > 1 && highestVote <= 0)
+        {
+            Debug.Log("The mostvotedPlayers is more than 1 or highest vote is 0 returning early");
+            return;
+        }
         
         var mostVotedPlayer = mostVotedPlayers.First();
+        Debug.Log("most voted player is " + mostVotedPlayer);
         
         GameManager.Instance.RestartDayNightCycle();
+        Debug.Log($"restarting day night cycle");
         
         Debug.Log($"[{mostVotedPlayer}] is out");
         eliminatedPlayers.Add(mostVotedPlayer);
-        
-        if (mostVotedPlayer != string.Empty) GameManager.Instance.Kill(mostVotedPlayer);
+
+        if (mostVotedPlayer != string.Empty)
+        {
+            Debug.Log($"removing player {mostVotedPlayer}");
+            GameManager.Instance.Kill(mostVotedPlayer);
+        }
     }
 
     [ClientRpc]
