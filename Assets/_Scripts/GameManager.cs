@@ -27,7 +27,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private GameObject playerStartTransform;
 
-    private NetworkVariable<int> gameElapsedTime = new(0);
+    public NetworkVariable<int> gameElapsedTime = new(0);
 
     [SerializeField] private Image buttonBackground;
 

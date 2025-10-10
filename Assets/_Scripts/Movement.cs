@@ -18,7 +18,15 @@ public class Movement : NetworkBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-
+    /// <summary>
+    /// red - 29
+    /// green - 219
+    /// blue - 237
+    /// alpha - 255
+    ///
+    /// hexcode - 1DDBED
+    /// </summary>
+    
     // Update is called once per frame
     private void Update()
     {

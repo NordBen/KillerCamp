@@ -65,14 +65,15 @@ public class VoteManager : NetworkBehaviour
 
     private IEnumerator VotingCoroutine()
     {
-        var voteTime = voteScreen.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
         
-        float elapsedTime = 0f;
+        GameManager.Instance.gameElapsedTime.Value = 0;
+        
+        int elapsedTime = 0;
         while (elapsedTime < timeToVote)
         {
             yield return new WaitForSecondsRealtime(1f);
             elapsedTime++;
-            voteTime.text = $"Time left to vote: {timeToVote - elapsedTime}s";
+            GameManager.Instance.gameElapsedTime.Value = elapsedTime;
         }
         ServerStopVoteRpc();
     }
@@ -80,24 +81,46 @@ public class VoteManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerStopVoteRpc()
     {
+        VoteTimeUnsubscribtionClientRpc();
         ToggleVoteScreenClientRpc();
-        var mostVotedPlayer = playerVotes.Values.Max();
+        int highestVote = playerVotes.Values.Max();
+        var mostVotedPlayers = playerVotes.Where(votedPlayer => votedPlayer.Value == highestVote).Select(votedPlayer => votedPlayer.Key).ToList();
+
+        if (mostVotedPlayers.Count > 1 && highestVote <= 0) return;
+        
+        var mostVotedPlayer = mostVotedPlayers.First();
         
         GameManager.Instance.RestartDayNightCycle();
         
-        if (mostVotedPlayer == 0) return;
+        Debug.Log($"[{mostVotedPlayer}] is out");
+        eliminatedPlayers.Add(mostVotedPlayer);
         
-        var mostVotedPlayerId = playerVotes.First(kvp => kvp.Value == mostVotedPlayer).Key;
-        Debug.Log($"[{mostVotedPlayerId}] is out");
-        eliminatedPlayers.Add(mostVotedPlayerId);
-        
-        if (mostVotedPlayerId != string.Empty) GameManager.Instance.Kill(mostVotedPlayerId);
+        if (mostVotedPlayer != string.Empty) GameManager.Instance.Kill(mostVotedPlayer);
     }
 
     [ClientRpc]
     private void ToggleVoteScreenClientRpc(ClientRpcParams rpcParams = default)
     {
         voteScreen.SetActive(!voteScreen.activeSelf);
+        VoteTimeSubscribtionClientRpc();
+    }
+
+    [ClientRpc]
+    private void VoteTimeSubscribtionClientRpc(ClientRpcParams rpcParams = default)
+    {
+        GameManager.Instance.gameElapsedTime.OnValueChanged += UpdateVoteTimeUI;
+    }
+    
+    [ClientRpc]
+    private void VoteTimeUnsubscribtionClientRpc(ClientRpcParams rpcParams = default)
+    {
+        GameManager.Instance.gameElapsedTime.OnValueChanged -= UpdateVoteTimeUI;
+    }
+
+    private void UpdateVoteTimeUI(int oldValue, int newValue)
+    {
+        var voteTime = voteScreen.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
+        voteTime.text = $"Time left to vote: {timeToVote - GameManager.Instance.gameElapsedTime.Value}s";
     }
     
     [ClientRpc]
