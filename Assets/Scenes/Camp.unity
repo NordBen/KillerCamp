@@ -51598,11 +51598,11 @@ PrefabInstance:
       objectReference: {fileID: 140306409}
     - target: {fileID: 626299611461658479, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: dayDuration
-      value: 15
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 626299611461658479, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: totalRounds
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 626299611461658479, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: buttonBackground
@@ -51618,7 +51618,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4780062279124695450, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: timeToVote
-      value: 10
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4780062279124695450, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: voteScreen
