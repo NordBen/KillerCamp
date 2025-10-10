@@ -91,7 +91,13 @@ public class VoteManager : NetworkBehaviour
 
         if (mostVotedPlayers.Count > 1 && highestVote <= 0)
         {
-            Debug.Log("The mostvotedPlayers is more than 1 or highest vote is 0 returning early");
+            Debug.Log("The mostvotedPlayers is more than 1");
+            return;
+        }
+        
+        if (highestVote <= 0)
+        {
+            Debug.Log("highest vote is 0 returning early");
             return;
         }
         
