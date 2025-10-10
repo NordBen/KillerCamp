@@ -94,7 +94,7 @@ namespace KillerCamp.TaskSystem
         {
             if (NetworkManager.Singleton.LocalClientId != clientId) return;
 
-            var assignedTask = GameObject.FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID)
+            var assignedTask = FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID)
                 .First(bh => bh.NetworkObjectId == taskId);
 
             var player = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;//NetworkManager.Singleton.LocalClient.PlayerObject;
@@ -117,7 +117,7 @@ namespace KillerCamp.TaskSystem
         }
 
         [Rpc(SendTo.Server)]
-        public void ServerCompleteTaskRpc(ulong playerClientId)
+        public void ServerCompleteTaskRpc(ulong playerClientId, ulong taskObjId)
         {
             if (!playerTaskMap.TryGetValue(playerClientId, out int completedTaskIndex)) return;
 
@@ -126,10 +126,19 @@ namespace KillerCamp.TaskSystem
             
             var line = completedTask.gameObject.GetComponent<LineRenderer>();
             if (line != null) Destroy(line);
-            
-            completedTask.gameObject.SetActive(false);
+
+            CompleteTaskClientRpc(taskObjId);
             
             AssignTaskToPlayerRpc(playerClientId);
+        }
+
+        [ClientRpc]
+        private void CompleteTaskClientRpc(ulong taskId, ClientRpcParams rpcParams = default)
+        {
+            var completedTask = FindObjectsByType<TaskObject>(FindObjectsSortMode.InstanceID)
+                .First(bh => bh.NetworkObjectId == taskId);
+            
+            completedTask.gameObject.SetActive(false);
         }
         
         [Rpc(SendTo.Server)]

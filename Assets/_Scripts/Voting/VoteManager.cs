@@ -83,38 +83,41 @@ public class VoteManager : NetworkBehaviour
     {
         VoteTimeUnsubscribtionClientRpc();
         ToggleVoteScreenClientRpc();
-        int highestVote = playerVotes.Values.Max();
-        Debug.Log($"Highest vote is {highestVote}");
         
-        var mostVotedPlayers = playerVotes.Where(votedPlayer => votedPlayer.Value == highestVote).Select(votedPlayer => votedPlayer.Key).ToList();
-        Debug.Log($"there was {mostVotedPlayers.Count} players with {highestVote} votes");
+        bool killPlayer = true;
+        int highestVote = playerVotes.Values.Max();
+        
+        var mostVotedPlayers = playerVotes.Where(
+            votedPlayer => votedPlayer.Value == highestVote)
+            .Select(votedPlayer => votedPlayer.Key).ToList();
 
         if (mostVotedPlayers.Count > 1)
         {
             Debug.Log("The mostvotedPlayers is more than 1");
-            return;
+            killPlayer = false;
         }
         
-        if (highestVote <= 0)
+        if (highestVote == 0)
         {
             Debug.Log("highest vote is 0 returning early");
-            return;
+            killPlayer = false;
         }
-        
-        var mostVotedPlayer = mostVotedPlayers.First();
-        Debug.Log("most voted player is " + mostVotedPlayer);
+
+        if (killPlayer)
+        {
+            var mostVotedPlayer = mostVotedPlayers.First();
+            Debug.Log("most voted player is " + mostVotedPlayer);
+            
+            eliminatedPlayers.Add(mostVotedPlayer);
+
+            if (mostVotedPlayer != string.Empty)
+            {
+                Debug.Log($"removing player {mostVotedPlayer}");
+                GameManager.Instance.Kill(mostVotedPlayer);
+            }
+        }
         
         GameManager.Instance.RestartDayNightCycle();
-        Debug.Log($"restarting day night cycle");
-        
-        Debug.Log($"[{mostVotedPlayer}] is out");
-        eliminatedPlayers.Add(mostVotedPlayer);
-
-        if (mostVotedPlayer != string.Empty)
-        {
-            Debug.Log($"removing player {mostVotedPlayer}");
-            GameManager.Instance.Kill(mostVotedPlayer);
-        }
     }
 
     [ClientRpc]
