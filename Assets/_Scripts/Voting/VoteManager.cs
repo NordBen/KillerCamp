@@ -81,10 +81,6 @@ public class VoteManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerStopVoteRpc()
     {
-        VoteTimeUnsubscribtionClientRpc();
-        ResetVotes();
-        ToggleVoteScreenClientRpc();
-        
         bool killPlayer = true;
         int highestVote = playerVotes.Values.Max();
         
@@ -117,7 +113,9 @@ public class VoteManager : NetworkBehaviour
                 GameManager.Instance.Kill(mostVotedPlayer);
             }
         }
-        
+        ResetVotes();
+        VoteTimeUnsubscribtionClientRpc();
+        ToggleVoteScreenClientRpc();
         GameManager.Instance.RestartDayNightCycle();
     }
 
