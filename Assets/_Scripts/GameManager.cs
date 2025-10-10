@@ -19,6 +19,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private TMP_Text dayText;
     [SerializeField] private float dayDuration = 90f;
     [SerializeField] private GameObject dayHUD;
+    
+    [SerializeField] private TMP_Text roundsText;
+    [SerializeField] private GameObject roundsHUD;
 
     [SerializeField] private GameObject winScreen;
     public void Win() => WinGame();
@@ -36,6 +39,9 @@ public class GameManager : NetworkBehaviour
     private NetworkList<bool> playersReady = new();
     private bool canStartGame = false;
     private bool rolesAssigned = false;
+
+    [SerializeField] private int totalRounds = 3;
+    private NetworkVariable<int> roundsplayed;
 
     public Action OnGameStarted;
 
@@ -122,6 +128,8 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
             RoleManager.Instance.AssignRoles();
             rolesAssigned = true;
         }
+
+        roundsplayed.Value = 0;
         
         ToggleReadyButtonClientRpc();
         ServerTeleportPlayersRpc();
@@ -217,23 +225,6 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         TryStartGame();
     }
 
-    /*[ClientRpc]
-    private void UpdateReadyButtonClientRpc()
-    {
-        if (!NetworkManager.Singleton.IsConnectedClient) return;
-        if(IsClient && playersReady.Count > (int)NetworkManager.Singleton.LocalClientId)
-        {
-            if(playersReady[(int)NetworkManager.Singleton.LocalClientId])
-            {
-                buttonBackground.color = Color.green;
-            }
-            else
-            {
-                buttonBackground.color = Color.white;
-            }
-        }
-    }*/
-
     public void SetPlayerReady()
     {
         if(IsClient)
@@ -262,12 +253,21 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
     private void UpdateDayHUDClientRpc(int oldValue, int newValue)
     {
         dayText.text = $"Time until vote {dayDuration - newValue}s";
+        roundsText.text = $"Round: {roundsplayed.Value}";
     }
 
     [Rpc(SendTo.Server)]
     private void ServerStartDayNightCycleRpc()
     {
         gameElapsedTime.Value = 0;
+        bool finishGame = roundsplayed.Value == totalRounds;
+        if (finishGame)
+        {
+            LoseGame();
+            return;
+        }
+        
+        roundsplayed.Value++;
         ToggleDayHUDClientRpc();
         StartCoroutine(DayNightCycle());
     }
@@ -306,11 +306,15 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         
         if (!found) return;
         
+        bool wasKiller = false;
         VoteManager.Singleton.DisablePlayerButton(playerName);
 
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientToKill, out var client))
         { 
             var playerObj = client.PlayerObject;
+            
+            var roleComponent = playerObj.GetComponent<RoleComponent>();
+            if (roleComponent.Role == CamperRole.Killer) wasKiller = true;
                 
             NetworkManager.Singleton.DisconnectClient(clientToKill);
             
@@ -323,6 +327,11 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         
         playersDict.Remove(clientToKill);
         UpdateList();
+
+        if (wasKiller)
+        {
+            WinGame();
+        }
     }
 
     private void WinGame()
