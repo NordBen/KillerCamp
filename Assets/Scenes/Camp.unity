@@ -51618,7 +51618,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4780062279124695450, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: timeToVote
-      value: 15
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 4780062279124695450, guid: 37cbfa71433da384393fd3f6dc403f6d, type: 3}
       propertyPath: voteScreen
