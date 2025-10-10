@@ -126,10 +126,10 @@ namespace KillerCamp.TaskSystem
             
             var line = completedTask.gameObject.GetComponent<LineRenderer>();
             if (line != null) Destroy(line);
-
-            CompleteTaskClientRpc(taskObjId);
             
             AssignTaskToPlayerRpc(playerClientId);
+
+            CompleteTaskClientRpc(taskObjId);
         }
 
         [ClientRpc]
