@@ -89,7 +89,7 @@ public class VoteManager : NetworkBehaviour
         var mostVotedPlayers = playerVotes.Where(votedPlayer => votedPlayer.Value == highestVote).Select(votedPlayer => votedPlayer.Key).ToList();
         Debug.Log($"there was {mostVotedPlayers.Count} players with {highestVote} votes");
 
-        if (mostVotedPlayers.Count > 1 && highestVote <= 0)
+        if (mostVotedPlayers.Count > 1)
         {
             Debug.Log("The mostvotedPlayers is more than 1");
             return;
