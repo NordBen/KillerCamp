@@ -47,8 +47,16 @@ public class PlayerState : NetworkBehaviour
         };
 
         ApplyColor(playerColor.Value);
+
+        playerName.OnValueChanged += OnPlayerNameChanged;
         
         base.OnNetworkSpawn();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        playerName.OnValueChanged -= OnPlayerNameChanged;
+        base.OnNetworkDespawn();
     }
 
     void ApplyColor(Color newColor)
@@ -69,13 +77,11 @@ public class PlayerState : NetworkBehaviour
         playerData.Value = new PlayerData(name, role);
         ulong clientId = rpcParams.Receive.SenderClientId;
         GameManager.Instance.UpdatePlayer(clientId, name);
-        SetupPlayerNameTagsClientRpc();
     }
-
-    [ClientRpc]
-    private void SetupPlayerNameTagsClientRpc()
+    
+    private void OnPlayerNameChanged(FixedString32Bytes oldValue, FixedString32Bytes newValue)
     {
-        nameTagText.text = playerName.Value.ToString();
+        nameTagText.text = newValue.ToString();
     }
 }
 
