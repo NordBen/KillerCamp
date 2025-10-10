@@ -82,6 +82,7 @@ public class VoteManager : NetworkBehaviour
     private void ServerStopVoteRpc()
     {
         VoteTimeUnsubscribtionClientRpc();
+        ResetVotes();
         ToggleVoteScreenClientRpc();
         
         bool killPlayer = true;
