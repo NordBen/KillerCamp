@@ -69,6 +69,7 @@ public class PlayerState : NetworkBehaviour
         playerData.Value = new PlayerData(name, role);
         ulong clientId = rpcParams.Receive.SenderClientId;
         GameManager.Instance.UpdatePlayer(clientId, name);
+        SetupPlayerNameTagsClientRpc();
     }
 
     [ClientRpc]
