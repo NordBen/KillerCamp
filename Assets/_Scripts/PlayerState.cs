@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using Unity.Collections;
 using UnityEngine;
 using Unity.Netcode;
@@ -8,6 +9,9 @@ public class PlayerState : NetworkBehaviour
 {
     [SerializeField] 
     private NetworkVariable<FixedString32Bytes> playerName;
+
+    [SerializeField] private TextMeshProUGUI nameTagText;
+    
     public FixedString32Bytes PlayerName => playerName.Value;
     
     private NetworkVariable<PlayerData>  playerData = new();
@@ -65,6 +69,12 @@ public class PlayerState : NetworkBehaviour
         playerData.Value = new PlayerData(name, role);
         ulong clientId = rpcParams.Receive.SenderClientId;
         GameManager.Instance.UpdatePlayer(clientId, name);
+    }
+
+    [ClientRpc]
+    private void SetupPlayerNameTagsClientRpc(ClientRpcParams rpcParams = default)
+    {
+        nameTagText.text = playerData.Name.ToString();
     }
 }
 
