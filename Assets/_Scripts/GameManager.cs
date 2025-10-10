@@ -41,7 +41,7 @@ public class GameManager : NetworkBehaviour
     private bool rolesAssigned = false;
 
     [SerializeField] private int totalRounds = 3;
-    private NetworkVariable<int> roundsplayed;
+    private NetworkVariable<int> roundsplayed = new(0);
 
     public Action OnGameStarted;
 
