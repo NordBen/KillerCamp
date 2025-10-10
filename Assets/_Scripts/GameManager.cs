@@ -152,7 +152,11 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
         }
 
         ToggleReadyButtonClientRpc();
+        ToggleLoseScreenClientRpc();
+        ToggleWinScreenClientRpc();
     }
+    
+    
 
     [ClientRpc]
     private void ToggleReadyButtonClientRpc()
@@ -354,7 +358,7 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
     [ClientRpc]
     private void ToggleWinScreenClientRpc()
     {
-        winScreen.SetActive(true);
+        winScreen.SetActive(!winScreen.activeSelf);
     }
     
     private void LoseGame()
@@ -376,6 +380,6 @@ private void Singleton_OnClientConnectedCallback(ulong obj)
     [ClientRpc]
     private void ToggleLoseScreenClientRpc()
     {
-        loseScreen.SetActive(true);
+        loseScreen.SetActive(!loseScreen.activeSelf);
     }
 }
