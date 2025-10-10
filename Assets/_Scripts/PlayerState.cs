@@ -50,6 +50,8 @@ public class PlayerState : NetworkBehaviour
 
         playerName.OnValueChanged += OnPlayerNameChanged;
         
+        OnPlayerNameChanged(playerName.Value, playerName.Value);
+        
         base.OnNetworkSpawn();
     }
 
