@@ -62,12 +62,11 @@ public class CarScript : NetworkBehaviour, IInteract
     [Rpc(SendTo.Server)]
     private void ServerTryInteractWithCarRpc()
     {
+        CarInteractedClientRpc();
         if (partsCounter.Value >= 3)
         {
-            GameManager.Instance.Win();
+            GameManager.Instance.Win(true);
         }
-        
-        CarInteractedClientRpc();
     }
 
     public void AddPart()
@@ -87,12 +86,9 @@ public class CarScript : NetworkBehaviour, IInteract
     [ClientRpc]
     private void UpdateCarSpriteClientRpc()
     {
-        int carSprite = 0;
         if (partsCounter.Value > 2)
         {
-            carSprite = 1;
+            spriteRenderer.sprite = carSprites[1];
         }
-        Debug.Log($"Updating sprite to sprite {carSprite}");
-        spriteRenderer.sprite = carSprites[carSprite];
     }
 }

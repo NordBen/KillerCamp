@@ -47,6 +47,8 @@ public class VoteManager : NetworkBehaviour
         if (!IsServer) return;
         
         playerVotes.Clear();
+        votedClients.Clear();
+        eliminatedPlayers.Clear();
         
         foreach (var kvp in GameManager.Instance.Players)
         {
@@ -61,7 +63,7 @@ public class VoteManager : NetworkBehaviour
     public void StartVote()
     {
         if (!IsServer) return;
-        ToggleVoteScreenClientRpc();
+        ToggleVoteScreenClientRpc(true);
         StartCoroutine(VotingCoroutine());
     }
 
@@ -117,14 +119,14 @@ public class VoteManager : NetworkBehaviour
         }
         ResetVotes();
         VoteTimeUnsubscribtionClientRpc();
-        ToggleVoteScreenClientRpc();
+        ToggleVoteScreenClientRpc(false);
         GameManager.Instance.RestartDayNightCycle();
     }
 
     [ClientRpc]
-    private void ToggleVoteScreenClientRpc(ClientRpcParams rpcParams = default)
+    public void ToggleVoteScreenClientRpc(bool toggle, ClientRpcParams rpcParams = default)
     {
-        voteScreen.SetActive(!voteScreen.activeSelf);
+        voteScreen.SetActive(toggle);
         VoteTimeSubscribtionClientRpc();
     }
 
@@ -142,7 +144,7 @@ public class VoteManager : NetworkBehaviour
 
     private void UpdateVoteTimeUI(int oldValue, int newValue)
     {
-        var voteTime = voteScreen.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
+        var voteTime = voteScreen.transform.GetChild(2).GetComponentInChildren<TextMeshProUGUI>();
         voteTime.text = $"Time left to vote: {timeToVote - GameManager.Instance.gameElapsedTime.Value}s";
     }
     
@@ -168,12 +170,12 @@ public class VoteManager : NetworkBehaviour
         {
             ulong playerNetworkId = kvp.Key;
 
-            var playerObj = kvp.Value.PlayerObject;//NetworkManager.Singleton.ConnectedClients[playerNetworkId].PlayerObject;
+            var playerObj = kvp.Value.PlayerObject;
             if (playerObj == null) continue;
         
             var player = playerObj.GetComponent<PlayerState>();
             if (player == null) continue;
-        
+            
             var playerSprite = player.SpriteData;
             FixedString32Bytes playerName = player.playerData.Value.Name;
             
@@ -334,7 +336,7 @@ public class VoteManager : NetworkBehaviour
         
         cross.gameObject.SetActive(true);
     }
-
+    
     private void SkipVote()
     {
         var skipVoteButton = Instantiate(votablePrefab);

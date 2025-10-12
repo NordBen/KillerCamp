@@ -623,7 +623,6 @@ GameObject:
   - component: {fileID: 7773167931244640925}
   - component: {fileID: -4984787510149209538}
   - component: {fileID: -5320117140028875352}
-  - component: {fileID: 9111557971922878155}
   - component: {fileID: 6525072043167551498}
   m_Layer: 3
   m_Name: Player
@@ -749,7 +748,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   movementSpeed: 5
-  moveThreshold: 0.1
 --- !u!114 &141371887103324735
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -970,20 +968,6 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
---- !u!114 &9111557971922878155
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6169890965277416667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28e39d57d39a65540b6266a20a235c7a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  currentTask: {fileID: 0}
 --- !u!81 &6525072043167551498
 AudioListener:
   m_ObjectHideFlags: 0

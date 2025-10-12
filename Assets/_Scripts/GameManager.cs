@@ -6,15 +6,13 @@ using Unity.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.Mathematics;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
-    [SerializeField] private SerializedDictionary<ulong, FixedString32Bytes> playersDict;
+    [SerializeField] private Dictionary<ulong, FixedString32Bytes> playersDict;
     public Dictionary<ulong, FixedString32Bytes> Players => playersDict;
 
     private NetworkList<FixedString32Bytes> players = new();
@@ -29,18 +27,18 @@ public class GameManager : NetworkBehaviour
     private GameObject winScreen;
     [SerializeField] 
     private GameObject loseScreen;
-    public void Win() => WinGame();
+    public void Win(bool campersWin = false) => WinGame(campersWin);
 
     [SerializeField] private GameObject playerStartsTransform;
 
     public NetworkVariable<int> gameElapsedTime = new(0);
-    [SerializeField] private int totalRounds = 3;
+    [SerializeField] private int totalRounds = 6;
     private NetworkVariable<int> roundsplayed = new(0);
     public NetworkVariable<float> fireFumes = new(0);
     
-    [SerializeField] private float fireStartingValue = 250f;
-    [SerializeField] private float fireMaxValue = 350f;
-    [SerializeField] private float fireDecreaseValue = 5f;
+    [SerializeField] private float fireStartingValue = 600f;
+    [SerializeField] private float fireMaxValue = 900f;
+    [SerializeField] private float fireDecreaseValue = 1.25f;
 
     [SerializeField] private Image buttonBackground;
 
@@ -49,7 +47,9 @@ public class GameManager : NetworkBehaviour
     private NetworkList<bool> playersReady = new();
     private bool canStartGame = false;
     private bool rolesAssigned = false;
-    private bool killersWon = false;
+    private bool canTick = true;
+    private bool gameActive = false;
+    private bool eventsSubscribed = false;
     
     private FixedString32Bytes[] playerNames = {
         "Frank", "Maya", "Mikael", "Benjamin", "Trond Olav", "Halldór", 
@@ -78,13 +78,12 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             Debug.Log($"On Network Spawn");
-            playersDict = new SerializedDictionary<ulong, FixedString32Bytes>();
+            playersDict = new Dictionary<ulong, FixedString32Bytes>();
             NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
             NetworkManager.Singleton.OnClientDisconnectCallback += Singleton_OnClientDisconnectedCallback;
         }
 
-        gameElapsedTime.OnValueChanged += UpdateDayHUDClientRpc;
-        fireFumes.OnValueChanged += UpdateFireValueClientRpc;
+        SubscribeGameEvents();
 
         if (IsClient)
         {
@@ -102,10 +101,25 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback -= Singleton_OnClientDisconnectedCallback;
         }
         
-        gameElapsedTime.OnValueChanged -= UpdateDayHUDClientRpc;
-        fireFumes.OnValueChanged -= UpdateFireValueClientRpc;
+        UnsubscribeGameEvents();
         
         base.OnNetworkDespawn();
+    }
+
+    private void SubscribeGameEvents()
+    {
+        if (eventsSubscribed) return;
+        gameElapsedTime.OnValueChanged += UpdateDayHUDClientRpc;
+        fireFumes.OnValueChanged += UpdateFireValueClientRpc;
+        eventsSubscribed = true;
+    }
+
+    private void UnsubscribeGameEvents()
+    {
+        if (!eventsSubscribed) return;
+        gameElapsedTime.OnValueChanged -= UpdateDayHUDClientRpc;
+        fireFumes.OnValueChanged -= UpdateFireValueClientRpc;
+        eventsSubscribed = false;
     }
     
     private void Singleton_OnClientConnectedCallback(ulong obj)
@@ -190,9 +204,14 @@ public class GameManager : NetworkBehaviour
             rolesAssigned = true;
         }
 
+        canTick = true;
+        gameActive = true;
         gameElapsedTime.Value = 0;
         roundsplayed.Value = 0;
         fireFumes.Value = fireStartingValue;
+        fireDecreaseValue = 1.25f;
+        
+        SubscribeGameEvents();
         
         ToggleReadyButtonClientRpc();
         ServerTeleportPlayersRpc();
@@ -204,39 +223,39 @@ public class GameManager : NetworkBehaviour
     public void RestartGame()
     {
         if (!IsServer) return;
-        
-        canStartGame = false;
-        rolesAssigned = false;
 
         for (int i = 0; i < playersReady.Count; i++)
         {
             playersReady[i] = false;
         }
 
-        foreach (var kvp in playersDict)
+        Debug.Log("looping playersdict with length of " + playersDict.Count);
+        foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
         {
-            NetworkObject playerObj = null;
-            if (NetworkManager.Singleton.ConnectedClients.TryGetValue(kvp.Key, out var client))
-            {
-                playerObj = client.PlayerObject;
-            }
+            var clientId = kvp.Key;
+            var playerObj = kvp.Value.PlayerObject;
 
-            if (playerObj == null) continue;
+            if (playerObj == null)
+            {
+                Debug.Log($"player {kvp.Key} not found");
+                continue;
+            }
             var player = playerObj.GetComponent<PlayerState>();
             if (player.playerData.Value.Status == PlayerStatus.Dead)
             {
-                Debug.Log($"Setting player {kvp.Key} to alive");
+                Debug.LogError($"Setting player {kvp.Key} to alive");
                 PlayerData playerData = player.playerData.Value;
                 playerData.Status = PlayerStatus.Alive;
                 player.playerData.Value = playerData;
+                
                 AlivePlayerClientRpc(playerObj);
             }
         }
         
-        if (killersWon) ToggleLoseScreenClientRpc();
-        else ToggleWinScreenClientRpc();
-
+        UpdateList();
         ToggleReadyButtonClientRpc();
+        ToggleLoseScreenClientRpc(false);
+        ToggleWinScreenClientRpc(false);
     }
 
     [ClientRpc]
@@ -302,32 +321,33 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void ServerStartDayNightCycleRpc()
     {
+        if (!gameActive) return;
+        
         gameElapsedTime.Value = 0;
-        bool finishGame = roundsplayed.Value == totalRounds;
-        if (finishGame)
+        if (roundsplayed.Value >= totalRounds)
         {
-            Debug.Log("[ServerStartDayNightCycleRpc] Finishing Game killers win");
-            WinGame();
+            WinGame(false);
             return;
         }
-        Debug.Log($"[ServerStartDayNightCycleRpc] Starting Day Night Cycle {roundsplayed.Value} after finish game is called");
         
         roundsplayed.Value++;
         fireDecreaseValue *= 2f;
-        ToggleDayHUDClientRpc();
+        ToggleDayHUDClientRpc(true);
         StartCoroutine(DayNightCycle());
     }
     
     private IEnumerator DayNightCycle()
     {
         Debug.Log("Starting Day Night Cycle");
+        if (!canTick || !gameActive) yield break;
         while (gameElapsedTime.Value < dayDuration)
         {
             yield return new WaitForSecondsRealtime(1);
+            if (!gameActive) yield break;
             gameElapsedTime.Value++;
             ServerUpdateFireValueRpc(-fireDecreaseValue);
         }
-        ServerStartVotingRpc();
+        if (gameActive) ServerStartVotingRpc();
     }
 
     [ClientRpc]
@@ -338,21 +358,25 @@ public class GameManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void ToggleDayHUDClientRpc()
+    private void ToggleDayHUDClientRpc(bool toggle)
     {
-        Debug.Log($"Toggle Day HUD {dayHUD.gameObject.activeSelf}");
-        dayHUD.SetActive(!dayHUD.activeSelf);
+        Debug.Log($"Toggle Day HUD {toggle}");
+        dayHUD.SetActive(toggle);
         UpdateDayHUDClientRpc(0, 0);
     }
 
     [Rpc(SendTo.Server)]
     public void ServerUpdateFireValueRpc(float value)
     {
-        if (!IsServer) return;
+        if (!IsServer || !gameActive) return;
         float oldValue = fireFumes.Value;
         float newValue = MathF.Min(oldValue + value, fireMaxValue);
         newValue = MathF.Max(newValue, 0);
         fireFumes.Value = newValue;
+        if (newValue <= 0 && oldValue > 0)
+        {
+            WinGame(false);
+        }
     }
 
     [ClientRpc]
@@ -360,17 +384,11 @@ public class GameManager : NetworkBehaviour
     {
         fireText.text = $"Fire: {newValue}";
     }
-
-    [ClientRpc]
-    private void ToggleFireHUDClientRpc()
-    {
-        fireText.transform.parent.gameObject.SetActive(!fireText.gameObject.activeSelf);
-    }
     
     private void ServerStartVotingRpc()
     {
         if (!IsServer) return;
-        ToggleDayHUDClientRpc();
+        ToggleDayHUDClientRpc(false);
         ServerTeleportPlayersRpc();
         VoteManager.Singleton.StartVote();
     }
@@ -412,9 +430,6 @@ public class GameManager : NetworkBehaviour
                 KillPlayerClientRpc(playerObj);
             }
         }
-        
-        playersDict.Remove(clientToKill);
-        UpdateList();
 
         if (wasKiller)
         {
@@ -435,8 +450,9 @@ public class GameManager : NetworkBehaviour
             spriteRenderer.color = deadColor;
 
             var headSprite = playerObj.transform.GetChild(1).GetComponent<SpriteRenderer>();
-            deadColor.a = 0.2f;
-            headSprite.color = deadColor;
+            Color deadHeadColor = headSprite.color;
+            deadHeadColor.a = 0.2f;
+            headSprite.color = deadHeadColor;
             
             var light = playerObj.transform.GetChild(3).GetComponent<Light2D>();
             light.gameObject.SetActive(false);
@@ -444,7 +460,7 @@ public class GameManager : NetworkBehaviour
             if (playerObj.OwnerClientId == NetworkManager.Singleton.LocalClientId)
             {
                 light.gameObject.SetActive(true);
-                light.falloffIntensity = 80;
+                light.falloffIntensity = 800;
             }
         }
     }
@@ -454,7 +470,7 @@ public class GameManager : NetworkBehaviour
     {
         if (playerObjRef.TryGet(out var playerObj))
         {
-            playerObj.gameObject.layer = LayerMask.NameToLayer("Default");
+            playerObj.gameObject.layer = LayerMask.NameToLayer("Player");
             
             var spriteRenderer = playerObj.GetComponent<SpriteRenderer>();
             Color aliveColor = spriteRenderer.color;
@@ -462,55 +478,45 @@ public class GameManager : NetworkBehaviour
             spriteRenderer.color = aliveColor;
 
             var headSprite = playerObj.transform.GetChild(1).GetComponent<SpriteRenderer>();
-            headSprite.color = aliveColor;
+            Color aliveHeadColor = headSprite.color;
+            aliveHeadColor.a = 1;
+            headSprite.color = aliveHeadColor;
             
             var light = playerObj.transform.GetChild(3).GetComponent<Light2D>();
             light.gameObject.SetActive(true);
-            light.falloffIntensity = .5f;
+            light.falloffIntensity = 0.5f;
         }
     }
 
-    private void WinGame(bool killerVotedOut = false)
+    private void WinGame(bool campersWin = false)
     {
-        Debug.Log("Win Game");
-        if (!IsServer) return;
+        if (!IsServer || !gameActive) return;
 
-        bool skipCheck = killerVotedOut;
-        if (!skipCheck)
-        {
-            foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
-            {
-                var playerObj = kvp.Value.PlayerObject;
-                if (playerObj == null) continue;
+        gameActive = false;
+        canTick = false;
+        canStartGame = false;
+        rolesAssigned = false;
 
-                var player = playerObj.GetComponent<PlayerState>();
-                if (player == null) continue;
+        StopAllCoroutines();
+        UnsubscribeGameEvents();
+        
+        ToggleDayHUDClientRpc(false);
+        VoteManager.Singleton.ToggleVoteScreenClientRpc(false);
+        VoteManager.Singleton.StopAllCoroutines();
 
-                if (player.playerData.Value.Role == CamperRole.Killer &&
-                    player.playerData.Value.Status != PlayerStatus.Dead)
-                {
-                    killersWon = true;
-                    Debug.Log("[WinGame] killers won");
-                    ToggleLoseScreenClientRpc();
-                    break;
-                }
-            }
-        }
-        killersWon = false;
-        ToggleWinScreenClientRpc();
+        if (campersWin) ToggleWinScreenClientRpc(true);
+        else ToggleLoseScreenClientRpc(true);
     }
 
     [ClientRpc]
-    private void ToggleWinScreenClientRpc()
+    private void ToggleWinScreenClientRpc(bool toggle)
     {
-        winScreen.SetActive(!winScreen.activeSelf);
-        Debug.Log($"Toggle Win Screen {winScreen.gameObject.activeSelf}");
+        winScreen.SetActive(toggle);
     }
     
     [ClientRpc]
-    private void ToggleLoseScreenClientRpc()
+    private void ToggleLoseScreenClientRpc(bool toggle)
     {
-        loseScreen.SetActive(!loseScreen.activeSelf);
-        Debug.Log($"Toggle Lose Screen {loseScreen.gameObject.activeSelf}");
+        loseScreen.SetActive(toggle);
     }
 }

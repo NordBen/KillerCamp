@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Netcode;
 using SerializeReferenceEditor;
@@ -15,21 +16,30 @@ namespace KillerCamp.TaskSystem
         private TMP_Text taskUIText;
 
         public BaseTask TaskType { get { return task; } }
-
-        private bool inInteraction = false;
+        
+        [SerializeField] private int cooldownTime = 1;
+        private NetworkVariable<int> cooldownTimer = new(0);
+        
+        [SerializeField] private bool isCampfire = false;
+        public bool IsCampfire => isCampfire;
 
         private GameObject interactedObj;
         private ulong interactingObjId;
+        private bool inInteraction = false;
 
         public override void OnNetworkSpawn()
         {
-            int sabotageTime = 3;
-            if (task is TimedTask timedTask) sabotageTime = timedTask.Duration;
+            if (alternativeTask == null)
+            {
+                int sabotageTime = 3;
+                if (task is TimedTask timedTask) sabotageTime = timedTask.Duration;
             
-            alternativeTask = new KillerTask(sabotageTime);
+                alternativeTask = new KillerTask(sabotageTime);
             
-            var killerTask = alternativeTask as KillerTask;
-            killerTask.TaskToSabotage = this;
+                var killerTask = alternativeTask as KillerTask;
+                killerTask.TaskToSabotage = this;
+                killerTask.FireReward *= -1;
+            }
             
             if (TaskType != null) TaskType.OnComplete += OnTaskComplete;
             if (alternativeTask != null) alternativeTask.OnComplete += OnTaskComplete;
@@ -52,6 +62,7 @@ namespace KillerCamp.TaskSystem
 
         public bool CanInteract()
         {
+            if (cooldownTimer.Value > 0) return false;
             return task.CurrentState != TaskState.Unassigned;
         }
 
@@ -59,7 +70,23 @@ namespace KillerCamp.TaskSystem
         {
             Debug.Log("Camper is interacting with: " + this);
             TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, interactingObjId);
-            
+            var interactionHandler = NetworkManager.Singleton.ConnectedClients[interactingObjId].PlayerObject.GetComponent<InteractionHandler>();
+            if (interactionHandler == null) return;
+            interactionHandler.SetInteract(null);
+        }
+
+        private void Update()
+        {
+            if (!IsServer || cooldownTimer.Value <= 0) return;
+
+            if (cooldownTimer.Value > 0)
+            {
+                cooldownTimer.Value--;
+                if (cooldownTimer.Value <= 0)
+                {
+                    cooldownTimer.Value = 0;
+                }
+            }
         }
 
         public bool IsInteracting()
@@ -80,7 +107,7 @@ namespace KillerCamp.TaskSystem
             Debug.Log($"Collided with {other.gameObject.name}");
             
             inInteraction = true;
-            var interactionHandler = other.GetComponent<InteractionHandler>();
+            var interactionHandler = NetworkManager.Singleton.ConnectedClients[interactingObjId].PlayerObject.GetComponent<InteractionHandler>();
             if (interactionHandler == null) return;
             interactionHandler.SetInteract(NetworkObject);
         }
@@ -88,12 +115,20 @@ namespace KillerCamp.TaskSystem
         private void OnTriggerExit2D(Collider2D other)
         {
             if (!other.CompareTag("Player")) return;
+            
+            var interactionHandler = NetworkManager.Singleton.ConnectedClients[interactingObjId].PlayerObject.GetComponent<InteractionHandler>();
+            if (interactionHandler == null) return;
+            interactionHandler.SetInteract(null);
+            
             inInteraction = false;
             interactingObjId = 0;
             interactedObj = null;
-            var interactionHandler = other.GetComponent<InteractionHandler>();
-            if (interactionHandler == null) return;
-            interactionHandler.SetInteract(null);
+        }
+
+        public void StartCooldown()
+        {
+            if (!IsServer) return;
+            cooldownTimer.Value = cooldownTime;
         }
 
         public void ExecuteTask(ulong playerClientId, bool isKiller = false)
@@ -159,12 +194,20 @@ namespace KillerCamp.TaskSystem
             taskUI.SetActive(false);
         }
 
-        public void SetState(TaskState newState)
+        public void SetState(TaskState newState, bool isKiller = false)
         {
-            if (task.CurrentState == newState) return;
+            if (isCampfire) return;
             
-            task.SetState(newState);
-            Debug.Log("Task state changed to: " + newState);
+            var taskToSetState = isKiller ? alternativeTask : task;
+            if (taskToSetState.CurrentState == newState) return;
+            
+            taskToSetState.SetState(newState);
+        }
+
+        public ITask GetTaskCompleted(bool isKiller = false)
+        {
+            var taskToReturn = isKiller ? alternativeTask : task;
+            return taskToReturn;
         }
     }
 }

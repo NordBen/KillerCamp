@@ -29,8 +29,8 @@ namespace KillerCamp.TaskSystem
         public bool HasStarted { get; protected set; }
         public bool HasFinished { get; protected set; }
         
-        [SerializeField] private float fireReward = 10f;
-        public float FireReward { get; protected set; }
+        [SerializeField] private float fireReward = 40f;
+        public float FireReward { get => fireReward; set => fireReward = value; }
 
         public async void Execute(object owningObject)
         {
@@ -126,12 +126,5 @@ namespace KillerCamp.TaskSystem
         public KillerTask(int duration) : base(duration) {}
 
         public TaskObject TaskToSabotage { get => taskToSabotage; set => taskToSabotage = value; }
-
-        public override void OnCompleted()
-        {
-            base.OnCompleted();
-            if (taskToSabotage == null) return;
-            taskToSabotage.TaskType.Reset();
-        }
     }
 }

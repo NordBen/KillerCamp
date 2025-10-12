@@ -19,7 +19,6 @@ public class RelayManager : MonoBehaviour
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
         Debug.Log(AuthenticationService.Instance.AccessToken);
-
     }
 
     public async Task CreateRelay(bool host, string code)
@@ -55,7 +54,6 @@ public class RelayManager : MonoBehaviour
                 allocation.ConnectionData
             );
         }
-
     }
 
     internal async Task JoinRelay(string text)
