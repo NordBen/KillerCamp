@@ -5,11 +5,8 @@ public class Movement : NetworkBehaviour
 {
     [SerializeField] 
     private float movementSpeed = 5.0f;
-    
-    [SerializeField]
-    private float moveThreshold = 0.001f;
 
-    private SpriteRenderer[] spriteRenderers;
+    private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
     private Vector2 movement;
     private Vector2 lastPosition;
@@ -21,7 +18,7 @@ public class Movement : NetworkBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     /// <summary>
@@ -79,7 +76,6 @@ public class Movement : NetworkBehaviour
     private void FixedUpdate()
     {
         if (IsServer) ServerMovement();
-        //else if (IsOwner) ClientPredictMove();
     }
 
     private void HandleDirectionChange()
@@ -88,21 +84,18 @@ public class Movement : NetworkBehaviour
         
         if (movement.x > 0)
         {
-            flippedX.Value = false;
+            flippedX.Value = true;
         }
         else if (movement.x < 0)
         {
-            flippedX.Value = true;
+            flippedX.Value = false;
         }
     }
-    
+
     private void OnDirectionChange(bool newValue, bool oldValue)
     {
-        foreach (var spriteRenderer in spriteRenderers)
-        {
-            if (spriteRenderer == null) continue;
-            spriteRenderer.flipX = newValue;
-        }
+        if (spriteRenderer == null) return;
+        spriteRenderer.flipX = newValue;
     }
 
     [Rpc(SendTo.Server)]
@@ -117,12 +110,5 @@ public class Movement : NetworkBehaviour
         
         Vector2 newPosition = rb.position + movement * movementSpeed * Time.fixedDeltaTime;
         rb.MovePosition(newPosition);
-    }
-
-    private void ClientPredictMove()
-    {
-        if (!IsOwner || IsServer) return;
-        Vector2 predictedPosition = rb.position + movement * movementSpeed * Time.fixedDeltaTime;
-        rb.MovePosition(predictedPosition);
     }
 }

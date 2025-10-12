@@ -190,6 +190,7 @@ public class GameManager : NetworkBehaviour
             rolesAssigned = true;
         }
 
+        gameElapsedTime.Value = 0;
         roundsplayed.Value = 0;
         fireFumes.Value = fireStartingValue;
         
@@ -203,12 +204,9 @@ public class GameManager : NetworkBehaviour
     public void RestartGame()
     {
         if (!IsServer) return;
-
-        gameElapsedTime.Value = 0;
+        
         canStartGame = false;
         rolesAssigned = false;
-        
-        ToggleReadyButtonClientRpc();
 
         for (int i = 0; i < playersReady.Count; i++)
         {
@@ -228,14 +226,17 @@ public class GameManager : NetworkBehaviour
             if (player.playerData.Value.Status == PlayerStatus.Dead)
             {
                 Debug.Log($"Setting player {kvp.Key} to alive");
+                PlayerData playerData = player.playerData.Value;
+                playerData.Status = PlayerStatus.Alive;
+                player.playerData.Value = playerData;
                 AlivePlayerClientRpc(playerObj);
             }
         }
-
-        ToggleReadyButtonClientRpc();
         
         if (killersWon) ToggleLoseScreenClientRpc();
         else ToggleWinScreenClientRpc();
+
+        ToggleReadyButtonClientRpc();
     }
 
     [ClientRpc]
@@ -305,10 +306,11 @@ public class GameManager : NetworkBehaviour
         bool finishGame = roundsplayed.Value == totalRounds;
         if (finishGame)
         {
-            Debug.Log("Finishing Game killers win");
+            Debug.Log("[ServerStartDayNightCycleRpc] Finishing Game killers win");
             WinGame();
             return;
         }
+        Debug.Log($"[ServerStartDayNightCycleRpc] Starting Day Night Cycle {roundsplayed.Value} after finish game is called");
         
         roundsplayed.Value++;
         fireDecreaseValue *= 2f;
@@ -348,7 +350,8 @@ public class GameManager : NetworkBehaviour
     {
         if (!IsServer) return;
         float oldValue = fireFumes.Value;
-        float newValue = MathF.Max(oldValue + value, fireMaxValue);
+        float newValue = MathF.Min(oldValue + value, fireMaxValue);
+        newValue = MathF.Max(newValue, 0);
         fireFumes.Value = newValue;
     }
 

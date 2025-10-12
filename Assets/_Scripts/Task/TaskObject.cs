@@ -31,7 +31,8 @@ namespace KillerCamp.TaskSystem
             var killerTask = alternativeTask as KillerTask;
             killerTask.TaskToSabotage = this;
             
-            TaskType.OnComplete += OnTaskComplete;
+            if (TaskType != null) TaskType.OnComplete += OnTaskComplete;
+            if (alternativeTask != null) alternativeTask.OnComplete += OnTaskComplete;
             
             taskUIText = taskUI.GetComponentInChildren<TMP_Text>();
             base.OnNetworkSpawn();
@@ -39,7 +40,8 @@ namespace KillerCamp.TaskSystem
 
         public override void OnNetworkDespawn()
         {
-            TaskType.OnComplete -= OnTaskComplete;
+            if (TaskType != null) TaskType.OnComplete -= OnTaskComplete;
+            if (alternativeTask != null) alternativeTask.OnComplete -= OnTaskComplete;
             base.OnNetworkDespawn();
         }
 
@@ -57,6 +59,7 @@ namespace KillerCamp.TaskSystem
         {
             Debug.Log("Camper is interacting with: " + this);
             TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, interactingObjId);
+            
         }
 
         public bool IsInteracting()
