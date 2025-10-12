@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2859996978327317482}
   - component: {fileID: 8742638094188259633}
   - component: {fileID: 1329132935011242563}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: Text_PlayerName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -147,7 +147,7 @@ GameObject:
   - component: {fileID: 4904270030843140874}
   - component: {fileID: 4961671327507080496}
   - component: {fileID: 1147915024072627408}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: PlayerCam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -276,7 +276,7 @@ GameObject:
   - component: {fileID: 1909394083247664821}
   - component: {fileID: 3922667327538225146}
   - component: {fileID: 6004960106039258047}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WorldSpaceUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -378,7 +378,7 @@ GameObject:
   - component: {fileID: 1143378457813784889}
   - component: {fileID: 8494293086631908695}
   - component: {fileID: 4730029758231061213}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -479,7 +479,7 @@ GameObject:
   - component: {fileID: 8673130166744749419}
   - component: {fileID: 1861076437839876237}
   - component: {fileID: 8658348501465518261}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: PlayerRole
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -623,10 +623,9 @@ GameObject:
   - component: {fileID: 7773167931244640925}
   - component: {fileID: -4984787510149209538}
   - component: {fileID: -5320117140028875352}
-  - component: {fileID: 1411579776571484084}
   - component: {fileID: 9111557971922878155}
   - component: {fileID: 6525072043167551498}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -643,7 +642,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.14263, y: 0.14263, z: 0.14263}
+  m_LocalScale: {x: 0.15, y: 0.15, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5637102450484633696}
@@ -750,6 +749,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   movementSpeed: 5
+  moveThreshold: 0.1
 --- !u!114 &141371887103324735
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -778,42 +778,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  playerName:
-    m_InternalValue:
-      utf8LengthInBytes: 0
-      bytes:
-        offset0000:
-          byte0000: 0
-          byte0001: 0
-          byte0002: 0
-          byte0003: 0
-          byte0004: 0
-          byte0005: 0
-          byte0006: 0
-          byte0007: 0
-          byte0008: 0
-          byte0009: 0
-          byte0010: 0
-          byte0011: 0
-          byte0012: 0
-          byte0013: 0
-          byte0014: 0
-          byte0015: 0
-        byte0016: 0
-        byte0017: 0
-        byte0018: 0
-        byte0019: 0
-        byte0020: 0
-        byte0021: 0
-        byte0022: 0
-        byte0023: 0
-        byte0024: 0
-        byte0025: 0
-        byte0026: 0
-        byte0027: 0
-        byte0028: 0
-        byte0029: 0
   nameTagText: {fileID: 1329132935011242563}
+  roleText: {fileID: 8658348501465518261}
+  playerData:
+    m_InternalValue:
+      Name:
+        utf8LengthInBytes: 0
+        bytes:
+          offset0000:
+            byte0000: 0
+            byte0001: 0
+            byte0002: 0
+            byte0003: 0
+            byte0004: 0
+            byte0005: 0
+            byte0006: 0
+            byte0007: 0
+            byte0008: 0
+            byte0009: 0
+            byte0010: 0
+            byte0011: 0
+            byte0012: 0
+            byte0013: 0
+            byte0014: 0
+            byte0015: 0
+          byte0016: 0
+          byte0017: 0
+          byte0018: 0
+          byte0019: 0
+          byte0020: 0
+          byte0021: 0
+          byte0022: 0
+          byte0023: 0
+          byte0024: 0
+          byte0025: 0
+          byte0026: 0
+          byte0027: 0
+          byte0028: 0
+          byte0029: 0
+      Role: 0
+      Status: 0
+      CurrentTask: 0
 --- !u!61 &2934501416057569748
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -848,7 +853,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.037392616, y: 0}
+  m_Offset: {x: -0.05, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -858,7 +863,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 8.403666, y: 12.81595}
+  m_Size: {x: 9, y: 14}
   m_EdgeRadius: 0
 --- !u!50 &6286866275461491814
 Rigidbody2D:
@@ -868,7 +873,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6169890965277416667}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -901,8 +906,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   InteractionLayer:
     serializedVersion: 2
-    m_Bits: 0
-  hitObj: {fileID: 0}
+    m_Bits: 64
 --- !u!114 &-4984787510149209538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -927,7 +931,7 @@ MonoBehaviour:
   RotationMaxInterpolationTime: 0.1
   ScaleLerpSmoothing: 1
   ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 1
+  AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
   SyncPositionX: 1
@@ -966,20 +970,6 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
---- !u!114 &1411579776571484084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6169890965277416667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1378ec1fc7c154bc49ac72fabab77cf8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  roleText: {fileID: 8658348501465518261}
 --- !u!114 &9111557971922878155
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1011,7 +1001,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5637102450484633696}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CameraHolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1044,7 +1034,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4562667407926327862}
   - component: {fileID: 1800269318274677118}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Light 2D
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1156,7 +1146,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3866631290537623517}
   - component: {fileID: 7616182372608183006}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: HEad
   m_TagString: Untagged
   m_Icon: {fileID: 0}

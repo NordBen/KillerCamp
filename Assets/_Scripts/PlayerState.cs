@@ -1,5 +1,3 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
 using TMPro;
 using Unity.Collections;
 using UnityEngine;
@@ -8,22 +6,22 @@ using Random = UnityEngine.Random;
 
 public class PlayerState : NetworkBehaviour
 {
-    [SerializeField] 
-    private NetworkVariable<FixedString32Bytes> playerName;
+    //[SerializeField] private NetworkVariable<FixedString32Bytes> playerName;
 
-    [SerializeField] private TextMeshProUGUI nameTagText;
+    [SerializeField] 
+    private TextMeshProUGUI nameTagText;
     
-    public FixedString32Bytes PlayerName => playerName.Value;
+    [SerializeField] 
+    private TextMeshProUGUI roleText;
     
-    private NetworkVariable<PlayerData>  playerData = new();
-    public PlayerData PlayerData => playerData.Value;
+    //public FixedString32Bytes PlayerName => playerName.Value;
+    
+    public NetworkVariable<PlayerData>  playerData = new();
     
     private NetworkVariable<Color> playerColor = new();
     
     private SpriteRenderer spriteRenderer;
     public SpriteRenderer SpriteData => spriteRenderer;
-    
-    private FixedString32Bytes[] playerNames = {"Frank", "Maya", "Mikael", "Benjamin", "Trond Olav", "Halldór", "Inga", "Hilmir", "Steven", "Ivar", "Einar", "Marcela", "Lara", "Nico", "Valdi", "Rares", "Emma", "David", "Andreas", "Gabriel", "Ari", "Víctor", "Helga", "Adam", "Chris", "TO"};
 
     public override void OnNetworkSpawn()
     {
@@ -31,78 +29,82 @@ public class PlayerState : NetworkBehaviour
         
         if (IsServer)
         {
-            playerColor.Value = UnityEngine.Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
-        }
-        if (IsClient && IsOwner)
-        {
-            //var ServerController = FindObjectOfType<ServerController>();
-            //playerName = ServerController.PlayerName;
+            playerColor.Value = Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
+            PlayerData initialData = new PlayerData(new FixedString32Bytes($"Player{OwnerClientId}"), CamperRole.Camper);
+            playerData.Value = initialData;
             
-            AddPlayerToGameServerRpc(playerNames[Random.Range(0, playerNames.Length)], GetRole());
+            if (RoleManager.Instance != null) RoleManager.Instance.RegisterPlayer(this);
         }
-        Debug.Log("Player spawned");
-
+        
+        playerData.OnValueChanged += OnPlayerDataChanged;
+        //playerName.OnValueChanged += OnPlayerNameChanged;
         playerColor.OnValueChanged += (oldColor, newColor) =>
         {
             ApplyColor(newColor);
         };
 
+        OnPlayerDataChanged(default, playerData.Value);
+        //OnPlayerNameChanged(default, playerName.Value);
         ApplyColor(playerColor.Value);
-
-        playerName.OnValueChanged += OnPlayerNameChanged;
-        
-        OnPlayerNameChanged(playerName.Value, playerName.Value);
         
         base.OnNetworkSpawn();
     }
 
+    private void OnPlayerDataChanged(PlayerData previousValue, PlayerData newValue)
+    {
+        if (IsOwner && roleText != null)
+        {
+            CamperRole role = newValue.Role;
+            roleText.text = $"Role: {role}";
+            roleText.color = (role == CamperRole.Killer) ? Color.red : Color.green;
+        }
+        
+        if (nameTagText == null) return;
+        nameTagText.text = newValue.Name.ToString();
+        
+        // // Optional: change player color
+        // var rend = GetComponent<Renderer>();
+        // if (rend != null)
+        // {
+        //     rend.material.color = (current == PlayerRole.Killer) ? Color.red : Color.green;
+        // }
+    }
+
     public override void OnNetworkDespawn()
     {
-        playerName.OnValueChanged -= OnPlayerNameChanged;
+        //playerName.OnValueChanged -= OnPlayerNameChanged;
+        playerData.OnValueChanged -= OnPlayerDataChanged;
         base.OnNetworkDespawn();
     }
 
     void ApplyColor(Color newColor)
     {
+        if (spriteRenderer == null) return;
         spriteRenderer.color = newColor;
-    }
-
-    private CamperRole GetRole()
-    {
-        return GetComponent<RoleComponent>().Role;
-    }
-
-    [Rpc(SendTo.Server)]
-    private void AddPlayerToGameServerRpc(FixedString32Bytes name, CamperRole role, RpcParams rpcParams = default)
-    {
-        Debug.Log(name.ToString());
-        playerName.Value = name;
-        playerData.Value = new PlayerData(name, role);
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        GameManager.Instance.UpdatePlayer(clientId, name);
-    }
-    
-    private void OnPlayerNameChanged(FixedString32Bytes oldValue, FixedString32Bytes newValue)
-    {
-        nameTagText.text = newValue.ToString();
     }
 }
 
-[Serializable]
+[System.Serializable]
 public struct PlayerData : INetworkSerializable
 {
     public FixedString32Bytes Name;
     public CamperRole Role;
+    public PlayerStatus Status;
+    public ulong CurrentTask;
     
     public PlayerData(FixedString32Bytes inName, CamperRole inRole)
     {
         Name = inName;
         Role = inRole;
+        Status = PlayerStatus.Alive;
+        CurrentTask = 0;
     }
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref Name);
         serializer.SerializeValue(ref Role);
+        serializer.SerializeValue(ref Status);
+        serializer.SerializeValue(ref CurrentTask);
     }
 }

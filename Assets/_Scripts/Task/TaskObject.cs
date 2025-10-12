@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using Unity.Netcode;
 using SerializeReferenceEditor;
@@ -20,6 +19,7 @@ namespace KillerCamp.TaskSystem
         private bool inInteraction = false;
 
         private GameObject interactedObj;
+        private ulong interactingObjId;
 
         public override void OnNetworkSpawn()
         {
@@ -31,7 +31,7 @@ namespace KillerCamp.TaskSystem
             var killerTask = alternativeTask as KillerTask;
             killerTask.TaskToSabotage = this;
             
-            TaskType.OnComplete += TaskTypeOnOnComplete;
+            TaskType.OnComplete += OnTaskComplete;
             
             taskUIText = taskUI.GetComponentInChildren<TMP_Text>();
             base.OnNetworkSpawn();
@@ -39,14 +39,13 @@ namespace KillerCamp.TaskSystem
 
         public override void OnNetworkDespawn()
         {
-            TaskType.OnComplete -= TaskTypeOnOnComplete;
+            TaskType.OnComplete -= OnTaskComplete;
             base.OnNetworkDespawn();
         }
 
-        private void TaskTypeOnOnComplete()
+        private void OnTaskComplete()
         {
-            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-            TaskManager.Instance.ServerCompleteTaskRpc(player.GetComponent<NetworkObject>().OwnerClientId, NetworkObjectId);
+            TaskManager.Instance.ServerCompleteTaskRpc(interactingObjId, NetworkObjectId);
         }
 
         public bool CanInteract()
@@ -57,9 +56,7 @@ namespace KillerCamp.TaskSystem
         public void Interact()
         {
             Debug.Log("Camper is interacting with: " + this);
-            //TaskManager.Instance.TryInteractWithTaskRpc(interactedObj.GetComponent<NetworkObject>().NetworkObjectId);
-            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-            TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, player.GetComponent<NetworkObject>().OwnerClientId);
+            TaskManager.Instance.ServerTryInteractTaskRpc(NetworkObjectId, interactingObjId);
         }
 
         public bool IsInteracting()
@@ -69,61 +66,68 @@ namespace KillerCamp.TaskSystem
 
         private void OnTriggerEnter2D(Collider2D other)
         {
+            if (!other.CompareTag("Player")) return;
+
+            var networkObj = other.GetComponent<NetworkObject>();
+            if (networkObj == null) return;
+
+            interactingObjId = networkObj.OwnerClientId;
+
             interactedObj = other.gameObject;
             Debug.Log($"Collided with {other.gameObject.name}");
-            if (other.CompareTag("Player"))
-            {
-                Debug.Log("Player entered trigger");
-                inInteraction = true;
-                interactedObj.GetComponent<InteractionHandler>().SetInteract(this, gameObject);
-            }
+            
+            inInteraction = true;
+            var interactionHandler = other.GetComponent<InteractionHandler>();
+            if (interactionHandler == null) return;
+            interactionHandler.SetInteract(NetworkObject);
         }
 
         private void OnTriggerExit2D(Collider2D other)
         {
-            if (other.CompareTag("Player"))
-            {
-                inInteraction = false;
-            }
+            if (!other.CompareTag("Player")) return;
+            inInteraction = false;
+            interactingObjId = 0;
+            interactedObj = null;
+            var interactionHandler = other.GetComponent<InteractionHandler>();
+            if (interactionHandler == null) return;
+            interactionHandler.SetInteract(null);
         }
 
         public void ExecuteTask(ulong playerClientId, bool isKiller = false)
         {
+            if (!IsServer) return;
+            
             BaseTask taskToExecute;
             if (isKiller) taskToExecute = alternativeTask;
             else taskToExecute = task;
             
-            taskToExecute.Execute(this);
-            ShowTaskUIClientRpc(playerClientId);
-            
+            int taskDuration = 3;
             if (taskToExecute is TimedTask timedTaskToExecute)
             {
-                timedTaskToExecute.OnTickedEvent += (elapsedTime) => UpdateTimedTaskUIClientRpc(elapsedTime, isKiller);
+                taskDuration = timedTaskToExecute.Duration;
+                timedTaskToExecute.OnTickedEvent += (elapsedTime) => UpdateTimedTaskUIClientRpc(elapsedTime, taskDuration, isKiller);
                 timedTaskToExecute.OnComplete += () => UnsubscribleTickUIClientRpc(isKiller);
             }
+            ShowTaskUIClientRpc(playerClientId, taskDuration);
+            taskToExecute.OnComplete += () => DisableTaskUIClientRpc(playerClientId);
             
-            taskToExecute.OnComplete += () => DisableTaskUIClientRpc();
+            taskToExecute.Execute(this);
         }
         
         [ClientRpc]
-        public void ShowTaskUIClientRpc(ulong playerClientId)
+        public void ShowTaskUIClientRpc(ulong playerClientId, int startTime = 3)
         {
             if (NetworkManager.Singleton.LocalClientId != playerClientId) return;
             taskUI.SetActive(true);
+            UpdateTimedTaskUIClientRpc(0, startTime > 3 ? startTime : 0);
         }
 
         [ClientRpc]
-        private void UpdateTimedTaskUIClientRpc(int elapsedTime, bool isKiller = false)
+        private void UpdateTimedTaskUIClientRpc(int elapsedTime, int startTime, bool isKiller = false)
         {
             if (taskUIText == null) return;
-            
-            int startDuration = 3;
-            if (isKiller && alternativeTask is KillerTask killerTask) startDuration = killerTask.Duration;
-            else if (task is TimedTask timedTask) startDuration = timedTask.Duration;
-            
-            int displayedTime = startDuration - elapsedTime;
-            string timeString = $"Time to complete: {displayedTime}";
-            taskUIText.text = timeString;
+            int displayedTime = startTime - elapsedTime;
+            if (displayedTime >= 0) taskUIText.text = $"Time to complete: {displayedTime}";
         }
 
         [ClientRpc]
@@ -141,13 +145,14 @@ namespace KillerCamp.TaskSystem
 
             if (taskToUnsubscribeFrom != null && taskToUnsubscribeFrom is TimedTask timedTaskToUnsubscribeFrom)
             {
-                timedTaskToUnsubscribeFrom.OnTickedEvent -= (time) => UpdateTimedTaskUIClientRpc(time, iskiller);
+                timedTaskToUnsubscribeFrom.OnTickedEvent -= (time) => UpdateTimedTaskUIClientRpc(time, timedTaskToUnsubscribeFrom.Duration, iskiller);
             }
         }
 
         [ClientRpc]
-        private void DisableTaskUIClientRpc()
+        private void DisableTaskUIClientRpc(ulong clientId, ClientRpcParams rpcParams = default)
         {
+            if (NetworkManager.Singleton.LocalClientId != clientId) return;
             taskUI.SetActive(false);
         }
 

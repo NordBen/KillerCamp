@@ -1,4 +1,4 @@
-using KillerCamp.TaskSystem;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace KillerCamp
@@ -7,8 +7,7 @@ namespace KillerCamp
     {
         [SerializeField] private LayerMask InteractionLayer;
 
-        [SerializeField] private GameObject hitObj;
-
+        private NetworkObject interactingNetworkObject;
         private IInteract interactable;
         private bool interacting;
         
@@ -16,11 +15,16 @@ namespace KillerCamp
         
         public IInteract Interactable { get => interactable; set => interactable = value; }
 
-        public void SetInteract(IInteract inInteractable, GameObject inHitObj = null)
+        public void SetInteract(NetworkObject inNetworkObject)
         {
-            Interacting = true;
-            interactable = inInteractable;
-            hitObj = inHitObj;
+            Interacting = inNetworkObject != null;
+            interactingNetworkObject = inNetworkObject;
+            if (interactingNetworkObject == null) 
+            {
+                interactable = null;
+                return;
+            }
+            interactable = interactingNetworkObject.GetComponent<IInteract>();
         }
 
         void Update()
@@ -29,18 +33,6 @@ namespace KillerCamp
             {
                 interactable.Interact();
             }
-        }
-        
-        private void OnTriggerEnter2D(Collider2D collision)
-        {/*
-            Debug.Log($"Entered Trigger of {collision}");
-            hitObj = collision.gameObject;
-
-            if (hitObj.TryGetComponent<IInteract>(out IInteract interactable))
-            {
-                Debug.Log($"Interacted with {interactable}");
-                interactable.Interact();
-            }*/
         }
 
         private bool HasInteractable() => interactable != null;

@@ -10,7 +10,7 @@ using Unity.Services.Relay.Models;
 
 public class RelayManager : MonoBehaviour
 {
-    [SerializeField] private TMP_Text hostedCode;
+    [SerializeField] private TMP_Text lobbyCode;
     
     async void Start()
     {
@@ -22,15 +22,17 @@ public class RelayManager : MonoBehaviour
 
     }
 
-    public async Task CreateRelay(bool host)
+    public async Task CreateRelay(bool host, string code)
     {
         var allocation = await RelayService.Instance.CreateAllocationAsync(4);
 
-        string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        string joinCode = "";
+        if (string.IsNullOrEmpty(code)) 
+            joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        else joinCode = code;
 
         Debug.Log(joinCode);
-        string hostCodeString = $"Hosted Code: {joinCode}";
-        hostedCode.text = hostCodeString;
+        SetLobbyCode(joinCode);
 
         var unityTranport = NetworkManager.Singleton.GetComponent<UnityTransport>();
         if (host)
@@ -60,6 +62,8 @@ public class RelayManager : MonoBehaviour
     {
         JoinAllocation joinAllocation = await RelayService
             .Instance.JoinAllocationAsync(text);
+        
+        SetLobbyCode(text);
 
         var unityTranport = NetworkManager.Singleton.GetComponent<UnityTransport>();
 
@@ -71,5 +75,10 @@ public class RelayManager : MonoBehaviour
             joinAllocation.ConnectionData,
             joinAllocation.HostConnectionData
         );
+    }
+    
+    private void SetLobbyCode(string code)
+    {
+        lobbyCode.text = $"Lobby Code: {code}";
     }
 }

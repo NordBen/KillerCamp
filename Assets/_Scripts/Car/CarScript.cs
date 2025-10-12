@@ -43,16 +43,20 @@ public class CarScript : NetworkBehaviour, IInteract
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
-        {
-            inRange = true;
-            other.GetComponent<InteractionHandler>().SetInteract(this);
-        }
+        if (!other.CompareTag("Player")) return;
+
+        inRange = true;
+        var interactionHandler = other.GetComponent<InteractionHandler>();
+        if (interactionHandler == null) return;
+        interactionHandler.SetInteract(NetworkObject);
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    private void OnTriggerExit2D(Collider2D other)
     {
         inRange = false;
+        var interactionHandler = other.GetComponent<InteractionHandler>();
+        if (interactionHandler == null) return;
+        interactionHandler.SetInteract(null);
     }
 
     [Rpc(SendTo.Server)]
@@ -68,14 +72,14 @@ public class CarScript : NetworkBehaviour, IInteract
 
     public void AddPart()
     {
-        if (!IsServer) return;//ServerAddPartRpc();
+        if (!IsServer) return;
         
         partsCounter.Value++;
         UpdateCarSpriteClientRpc();
     }
 
     [ClientRpc]
-    private void CarInteractedClientRpc()
+    private void CarInteractedClientRpc(ClientRpcParams rpcParams = default)
     {
         if (carSound != null) carSound.Play();
     }
@@ -88,6 +92,7 @@ public class CarScript : NetworkBehaviour, IInteract
         {
             carSprite = 1;
         }
+        Debug.Log($"Updating sprite to sprite {carSprite}");
         spriteRenderer.sprite = carSprites[carSprite];
     }
 }

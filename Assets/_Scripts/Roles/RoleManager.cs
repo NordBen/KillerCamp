@@ -6,7 +6,7 @@ public class RoleManager : NetworkBehaviour
 {
     public static RoleManager Instance { get; private set; }
 
-    private List<RoleComponent> players = new();
+    private List<PlayerState> players = new();
 
     public int PlayerCount => players.Count;
 
@@ -15,7 +15,7 @@ public class RoleManager : NetworkBehaviour
         if (Instance == null) Instance = this;
     }
 
-    public void RegisterPlayer(RoleComponent player)
+    public void RegisterPlayer(PlayerState player)
     {
         if (IsServer && !players.Contains(player))
         {
@@ -32,13 +32,13 @@ public class RoleManager : NetworkBehaviour
 
         for (int i = 0; i < players.Count; i++)
         {
-            if (i == killerIndex)
-            {
-                players[i].SetRole(CamperRole.Killer);
-                continue;
-            }
-
-            players[i].SetRole(CamperRole.Camper);
+            PlayerData playerData = players[i].playerData.Value;
+            
+            if (i == killerIndex) playerData.Role = CamperRole.Killer;
+            else playerData.Role = CamperRole.Camper;
+            
+            players[i].playerData.Value = playerData;
+            players[i].playerData.SetDirty(true);
         }
 
         Debug.Log($"Player {killerIndex} is the Killer, rest are Campers.");

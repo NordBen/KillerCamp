@@ -160,9 +160,9 @@ public class VoteManager : NetworkBehaviour
         ulong localClientId = NetworkManager.Singleton.LocalClientId;
         
         var localPlayerObj = NetworkManager.Singleton.LocalClient.PlayerObject;
-        var localRoleComponent = localPlayerObj.GetComponent<RoleComponent>();
+        var localplayer = localPlayerObj.GetComponent<PlayerState>();
         
-        bool isKiller = localRoleComponent != null && localRoleComponent.Role == CamperRole.Killer;
+        bool isKiller = localplayer.playerData != null && localplayer.playerData.Value.Role == CamperRole.Killer;
 
         foreach (var kvp in NetworkManager.Singleton.ConnectedClients)
         {
@@ -171,19 +171,18 @@ public class VoteManager : NetworkBehaviour
             var playerObj = kvp.Value.PlayerObject;//NetworkManager.Singleton.ConnectedClients[playerNetworkId].PlayerObject;
             if (playerObj == null) continue;
         
-            var playerState = playerObj.GetComponent<PlayerState>();
-            if (playerState == null) continue;
+            var player = playerObj.GetComponent<PlayerState>();
+            if (player == null) continue;
         
-            var playerSprite = playerState.SpriteData;
-            FixedString32Bytes playerName = playerState.PlayerName.Value;
+            var playerSprite = player.SpriteData;
+            FixedString32Bytes playerName = player.playerData.Value.Name;
             
             GameObject votableButton = Instantiate(votablePrefab, voteScreen.transform.GetChild(0));
             var button = votableButton.GetComponentInChildren<Button>();
             var image = votableButton.transform.GetChild(0).GetComponentInChildren<Image>();
             var text = votableButton.GetComponentInChildren<TextMeshProUGUI>();
             
-            var roleComponent = playerObj.GetComponent<RoleComponent>();
-            var playerRole = roleComponent != null ? roleComponent.Role : CamperRole.Camper;
+            var playerRole = player.playerData != null ? player.playerData.Value.Role : CamperRole.Camper;
             
             image.sprite = playerSprite.sprite;
             image.color = playerSprite.color;
@@ -215,36 +214,6 @@ public class VoteManager : NetworkBehaviour
             }
         }
     }
-    /*
-    [ClientRpc]
-    private void CreateVoteButtonClientRpc(FixedString32Bytes playerName, ulong playerNetworkId, ClientRpcParams rpcParams = default)
-    {
-        Debug.Log($"trying to parent to {voteScreen.transform.GetChild(0)}");
-        GameObject votableButton = Instantiate(votablePrefab, voteScreen.transform.GetChild(0));
-        var button = votableButton.GetComponentInChildren<Button>();
-        var image = votableButton.transform.GetChild(0).GetComponentInChildren<Image>();
-        var text = votableButton.GetComponentInChildren<TextMeshProUGUI>();
-        
-        
-        var pre = NetworkManager.Singleton.ConnectedClients[playerNetworkId].PlayerObject.GetComponent<RoleComponent>();//NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<RoleComponent>();
-        var playerRole = CamperRole.Camper;
-        if (pre != null) 
-        {
-            playerRole = pre.Role;
-        }
-        
-        var playerSprite = pre.GetComponent<PlayerState>().SpriteData;
-        
-        button.onClick.AddListener(() => OnVotableButtonClicked(playerName, playerNetworkId));
-        image.sprite = playerSprite.sprite;
-        image.color = playerSprite.color;
-        text.text = playerName.ToString();
-        text.color = (playerRole == CamperRole.Killer) ? Color.red : Color.gray;
-        
-        votableButtons.Add(votableButton);
-        playerToButtonMap.Add(playerName, votableButtons.FindIndex(t => votableButton));
-        Debug.Log($"Created vote button for {playerName} connected to index: {votableButtons.FindIndex(t => votableButton)}");
-    }*/
 
     private void OnVotableButtonClicked(FixedString32Bytes votedPlayer, ulong voteeClientId)
     {

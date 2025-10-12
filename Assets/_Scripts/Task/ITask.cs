@@ -8,10 +8,11 @@ namespace KillerCamp.TaskSystem
 {
     public interface ITask
     {
-        abstract void Execute(object owningObject);
+        void Execute(object owningObject);
         TaskState CurrentState { get; }
         bool HasStarted { get; }
         bool HasFinished { get; }
+        float FireReward { get; }
     }
 
     public enum TaskState { Unassigned, Assigned, Started, OnGoing, Finished }
@@ -26,8 +27,10 @@ namespace KillerCamp.TaskSystem
         public void SetState(TaskState newState) => state = newState;
         
         public bool HasStarted { get; protected set; }
-
         public bool HasFinished { get; protected set; }
+        
+        [SerializeField] private float fireReward = 10f;
+        public float FireReward { get; protected set; }
 
         public async void Execute(object owningObject)
         {
@@ -41,13 +44,12 @@ namespace KillerCamp.TaskSystem
         public virtual void OnStarted()
         {
             HasStarted = true;
-            //state = TaskState.Started;
+            state = TaskState.Started;
         }
 
         public virtual void OnCompleted()
         {
             HasFinished = true;
-            //state = TaskState.Finished;
             OnComplete?.Invoke();
         }
 
@@ -60,22 +62,25 @@ namespace KillerCamp.TaskSystem
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
-            
+            serializer.SerializeValue(ref state);
+            serializer.SerializeValue(ref fireReward);
         }
     }
 
     [Serializable]
     public class TimedTask : BaseTask
     {
-        [SerializeField] private int taskDuration;
+        [SerializeField] private int taskDuration = 5;
         
         public int Duration => taskDuration;
         
+        private bool coroutineFinished;
         private int _elapsedTime;
         
         public event Action<int> OnTickedEvent;
         
         public TimedTask() {}
+        
         public TimedTask(int duration)
         {
             taskDuration = duration;
@@ -96,8 +101,7 @@ namespace KillerCamp.TaskSystem
             Debug.Log($"Time elasped {_elapsedTime}");
             OnTickedEvent?.Invoke(_elapsedTime);
         }
-
-        private bool coroutineFinished;
+        
         private IEnumerator DurationTask()
         {
             coroutineFinished = false;
@@ -126,6 +130,7 @@ namespace KillerCamp.TaskSystem
         public override void OnCompleted()
         {
             base.OnCompleted();
+            if (taskToSabotage == null) return;
             taskToSabotage.TaskType.Reset();
         }
     }

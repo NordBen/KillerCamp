@@ -37,7 +37,9 @@ public class CarParts : NetworkBehaviour, IInteract
         if(other.CompareTag("Player"))
         {
             inRange = true;
-            other.GetComponent<InteractionHandler>().SetInteract(this);
+            var interactionHandler = other.GetComponent<InteractionHandler>();
+            if (interactionHandler == null) return;
+            interactionHandler.SetInteract(NetworkObject);
         }
     }
 
@@ -46,6 +48,9 @@ public class CarParts : NetworkBehaviour, IInteract
         if (other.CompareTag("Player"))
         {
             inRange = false;
+            var interactionHandler = other.GetComponent<InteractionHandler>();
+            if (interactionHandler == null) return;
+            interactionHandler.SetInteract(null);
         }
     }
 
@@ -54,7 +59,7 @@ public class CarParts : NetworkBehaviour, IInteract
     {
         car.AddPart();
         PickupClientRpc();
-        gameObject.SetActive(false);
+        NetworkObject.gameObject.SetActive(false);
     }
     
     [ClientRpc]

@@ -5,20 +5,27 @@ public class Movement : NetworkBehaviour
 {
     [SerializeField] 
     private float movementSpeed = 5.0f;
+    
+    [SerializeField]
+    private float moveThreshold = 0.001f;
 
+    private SpriteRenderer[] spriteRenderers;
     private Rigidbody2D rb;
-
     private Vector2 movement;
+    private Vector2 lastPosition;
+    private float _elapsedTime;
+    private const float movementSyncRate = .01f;
 
-    private SpriteRenderer spriteRenderer;
+    private NetworkVariable<bool> flippedX = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
     }
 
     /// <summary>
+    /// COOL COLOR
     /// red - 29
     /// green - 219
     /// blue - 237
@@ -26,25 +33,96 @@ public class Movement : NetworkBehaviour
     ///
     /// hexcode - 1DDBED
     /// </summary>
-    
-    // Update is called once per frame
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        
+        if (IsOwner)
+        {
+            flippedX.Value = false;
+        }
+
+        flippedX.OnValueChanged += OnDirectionChange;
+        
+        OnDirectionChange(false, flippedX.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        flippedX.OnValueChanged -= OnDirectionChange;
+        base.OnNetworkDespawn();
+    }
+
     private void Update()
     {
+        if (!IsOwner) return;
+
         movement.x = Input.GetAxisRaw("Horizontal");
         movement.y = Input.GetAxisRaw("Vertical");
+        movement.Normalize();
 
-        if (movement.x > 0)
+        HandleDirectionChange();
+
+        _elapsedTime += Time.deltaTime;
+        if (_elapsedTime >= movementSyncRate)
         {
-            spriteRenderer.flipX = false;
-        }
-        else if (movement.x < 0)
-        {
-            spriteRenderer.flipX = true;
+            _elapsedTime = 0f;
+
+            if (movement != lastPosition)
+            {
+                ServerUpdateMovementRpc(movement);
+                lastPosition = movement;
+            }
         }
     }
 
     private void FixedUpdate()
     {
-        rb.MovePosition(rb.position + movement * movementSpeed * Time.fixedDeltaTime);
+        if (IsServer) ServerMovement();
+        //else if (IsOwner) ClientPredictMove();
+    }
+
+    private void HandleDirectionChange()
+    {
+        if (!IsOwner) return;
+        
+        if (movement.x > 0)
+        {
+            flippedX.Value = false;
+        }
+        else if (movement.x < 0)
+        {
+            flippedX.Value = true;
+        }
+    }
+    
+    private void OnDirectionChange(bool newValue, bool oldValue)
+    {
+        foreach (var spriteRenderer in spriteRenderers)
+        {
+            if (spriteRenderer == null) continue;
+            spriteRenderer.flipX = newValue;
+        }
+    }
+
+    [Rpc(SendTo.Server)]
+    private void ServerUpdateMovementRpc(Vector2 movementInput)
+    {
+        movement = movementInput;
+    }
+
+    private void ServerMovement()
+    {
+        if (!IsServer) return;
+        
+        Vector2 newPosition = rb.position + movement * movementSpeed * Time.fixedDeltaTime;
+        rb.MovePosition(newPosition);
+    }
+
+    private void ClientPredictMove()
+    {
+        if (!IsOwner || IsServer) return;
+        Vector2 predictedPosition = rb.position + movement * movementSpeed * Time.fixedDeltaTime;
+        rb.MovePosition(predictedPosition);
     }
 }
